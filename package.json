@@ -9,7 +9,8 @@
     "format:check": "prettier . --check",
     "lint:fix": "eslint --fix .",
     "lint:check": "eslint .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
   },
   "keywords": [
     "typescript",
@@ -21,10 +22,21 @@
     "@eslint/js": "^9.17.0",
     "@types/node": "^22.10.2",
     "eslint": "^9.17.0",
+    "husky": "^9.1.7",
     "nodemon": "^3.1.9",
     "prettier": "3.4.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.2"
+  },
+  "dependencies": {
+    "@types/lint-staged": "^13.3.0",
+    "lint-staged": "^15.3.0"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "npm run format:fix",
+      "npm run lint:fix"
+    ]
   }
 }

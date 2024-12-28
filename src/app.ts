@@ -10,5 +10,5 @@ const student = {
   },
 };
 
-const studentName = student["name"];
+const studentName = student.name;
 console.log(studentName);

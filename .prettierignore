@@ -5,3 +5,5 @@ package.json
 package-lock.json
 node_modules
 tsconfig.json
+eslint.config.mjs
+jest.config.js

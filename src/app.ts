@@ -1,14 +1,13 @@
-const student = {
-  name: "John Doe",
-  age: 25,
-  course: "Computer Science",
+import express, { Request, Response } from "express";
+import globalErrorHandler from "./middlewares/globalErrorHandler";
 
-  address: {
-    city: "Lagos",
+const app = express();
 
-    country: "Nigeria",
-  },
-};
+app.get("/", (req: Request, res: Response) => {
+  res.send("Hello World");
+});
 
-const studentName = student.name;
-console.log(studentName);
+// Global Error Handler
+app.use(globalErrorHandler);
+
+export default app;

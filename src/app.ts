@@ -1,13 +1,18 @@
-import express, { Request, Response } from "express";
+import "reflect-metadata";
+import express, { Request, Response, Express } from "express";
+import authRoute from "./routes/authRoute";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 
-const app = express();
+const app: Express = express();
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World");
+  res.json({
+    message: "Hello SnowBell, This message is coming from the server",
+  });
 });
 
-// Global Error Handler
+app.use("/auth", authRoute);
+
 app.use(globalErrorHandler);
 
 export default app;

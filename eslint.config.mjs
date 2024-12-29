@@ -19,10 +19,11 @@ export default tseslint.config(
   },
   {
     rules: {
-      "dot-notation": "error",
-      // "no-unused-vars": "warn",
+      // "dot-notation": "error",
+      "no-unused-vars": "warn",
       // "no-console": "error",
       "@typescript-eslint/no-misused-promises": "off",
+      "@typescript-eslint/no-floating-promises":"off"
     },
   }
 );

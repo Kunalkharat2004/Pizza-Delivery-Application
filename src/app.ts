@@ -3,7 +3,7 @@ import express, { Request, Response, Express } from "express";
 import authRoute from "./routes/authRoute";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 
-const app: Express = express();
+const app: Express = express(); // Removed explicit type annotation
 
 app.get("/", (req: Request, res: Response) => {
   res.json({

@@ -23,11 +23,11 @@ describe("POST /users/register", () => {
   describe("Given all the fileds", () => {
     it("should return 201", async () => {
       const user = {
-        firstname: "John",
-        lastname: "Doe",
+        firstName: "John",
+        lastName: "Doe",
         email: "johndoe@gmail.com",
         password: "password",
-        confirmPassword: "password",
+        address: "Sans Francisco",
       };
       const response = await request(app).post("/auth/register").send(user);
       expect(response.status).toBe(201);
@@ -35,29 +35,37 @@ describe("POST /users/register", () => {
 
     it("should return a json response", async () => {
       const user = {
-        firstname: "John",
-        lastname: "Doe",
+        firstName: "John",
+        lastName: "Doe",
         email: "johndoe@gmail.com",
         password: "password",
-        confirmPassword: "password",
+        address: "Sans Francisco",
       };
       const response = await request(app).post("/auth/register").send(user);
       expect(response.header["content-type"]).toBe("application/json; charset=utf-8");
     });
 
     it("should persist the user in the database", async () => {
+      // Arrange
       const user = {
-        firstname: "John",
-        lastname: "Doe",
-        email: "johndoe@gmail.com",
-        password: "password",
-        confirmPassword: "password",
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "Kunal@123",
+        address: "Pune, India",
       };
+
+      // Act
       await request(app).post("/auth/register").send(user);
 
+      // Assert
       const userRepo = connection.getRepository(User);
       const users = await userRepo.find();
       expect(users).toHaveLength(1);
+      expect(users[0].firstName).toBe(user.firstName);
+      expect(users[0].lastName).toBe(user.lastName);
+      expect(users[0].email).toBe(user.email);
+      expect(users[0].address).toBe(user.address);
     });
   });
   describe("Not given all the fields", () => {});

@@ -1,9 +1,18 @@
-import { Request, Response } from "express";
+import { Response } from "express";
+import { RegisterRequest } from "../types";
+import { UserService } from "../services";
 
 export class AuthController {
-  register(req: Request, res: Response) {
+  constructor(private userService: UserService) {}
+
+  async register(req: RegisterRequest, res: Response) {
+    const { firstName, lastName, email, password, address } = req.body;
+
+    const user = await this.userService.createUser({ firstName, lastName, email, password, address });
+
     res.status(201).json({
-      message: "User Registered Successfully",
+      message: "User created successfully",
+      data: user,
     });
   }
 }

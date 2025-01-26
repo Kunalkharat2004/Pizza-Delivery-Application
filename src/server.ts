@@ -11,6 +11,7 @@ const main = () => {
     });
   } catch (err) {
     console.error(err);
+    // logger.error(err);
     process.exit(1);
   }
 };

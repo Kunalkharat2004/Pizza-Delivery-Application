@@ -14,7 +14,7 @@ const globalErrorHandler = (err: HttpError, req: Request, res: Response, next: N
       {
         type: err.name,
         message: err.message,
-        statusCode: statusCode,
+        statusCode,
         stack: config.NODE_ENV === "production" ? "🥞" : err.stack,
         method: req.method,
       },

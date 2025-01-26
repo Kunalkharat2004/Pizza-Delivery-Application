@@ -6,7 +6,7 @@ import createHttpError from "http-errors";
 export class UserService {
   constructor(private userRepository: Repository<User>) {}
 
-  async createUser({ firstName, lastName, email, password, address }: IUser): Promise<User> {
+  async createUser({ firstName, lastName, email, password, address, role }: IUser): Promise<User> {
     try {
       return await this.userRepository.save({
         firstName,
@@ -14,6 +14,7 @@ export class UserService {
         email,
         password,
         address,
+        role,
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars

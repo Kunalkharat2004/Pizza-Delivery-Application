@@ -2,6 +2,7 @@ import { NextFunction, Response } from "express";
 import { RegisterRequest } from "../types";
 import { UserService } from "../services";
 import { Logger } from "winston";
+import { Roles } from "../constants";
 
 export class AuthController {
   constructor(
@@ -20,7 +21,14 @@ export class AuthController {
     });
 
     try {
-      const user = await this.userService.createUser({ firstName, lastName, email, password, address });
+      const user = await this.userService.createUser({
+        firstName,
+        lastName,
+        email,
+        password,
+        address,
+        role: Roles.CUSTOMER,
+      });
 
       this.logger.info(`User created successfully with id: ${user.id}`);
 

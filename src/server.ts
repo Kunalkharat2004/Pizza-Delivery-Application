@@ -10,8 +10,7 @@ const main = () => {
       logger.info(`Server is running on port ${PORT}`);
     });
   } catch (err) {
-    console.error(err);
-    // logger.error(err);
+    logger.error(err);
     process.exit(1);
   }
 };

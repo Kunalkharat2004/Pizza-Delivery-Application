@@ -11,3 +11,8 @@ export interface IUser {
 export interface RegisterRequest extends Request {
   body: IUser;
 }
+
+export interface RegisterResponse {
+  message: string;
+  id: number;
+}

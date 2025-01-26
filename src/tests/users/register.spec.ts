@@ -4,6 +4,7 @@ import request from "supertest";
 import { AppDataSource } from "../../config/data-source";
 import { truncateTable } from "../utils";
 import { User } from "../../entity/User";
+import { RegisterResponse } from "../../types";
 
 describe("POST /users/register", () => {
   let connection: DataSource;
@@ -66,6 +67,23 @@ describe("POST /users/register", () => {
       expect(users[0].lastName).toBe(user.lastName);
       expect(users[0].email).toBe(user.email);
       expect(users[0].address).toBe(user.address);
+    });
+
+    it("should return the id of the user", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "Kunal@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+      const responseBody = response.body as RegisterResponse;
+      expect(responseBody.id).toBeDefined();
+      expect(responseBody.message).toBe("User created successfully");
     });
   });
   describe("Not given all the fields", () => {});

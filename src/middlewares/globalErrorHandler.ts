@@ -2,6 +2,7 @@ import { HttpError } from "http-errors";
 import logger from "../config/logger";
 import config from "../config/config";
 import { NextFunction, Request, Response } from "express";
+import path from "path";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const globalErrorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
@@ -15,6 +16,8 @@ const globalErrorHandler = (err: HttpError, req: Request, res: Response, next: N
         type: err.name,
         message: err.message,
         statusCode,
+        path: req.path,
+        location: path.join(__dirname, "..", req.path),
         stack: config.NODE_ENV === "production" ? "🥞" : err.stack,
         method: req.method,
       },

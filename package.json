@@ -44,6 +44,7 @@
       "@types/lint-staged": "^13.3.0",
       "bcrypt": "^5.1.1",
       "dotenv": "^16.4.7",
+      "express-validator": "^7.2.1",
       "http-errors": "^2.0.0",
       "lint-staged": "^15.3.0",
       "pg": "^8.4.0",

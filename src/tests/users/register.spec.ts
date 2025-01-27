@@ -148,5 +148,22 @@ describe("POST /users/register", () => {
       expect(users).toHaveLength(1);
     });
   });
-  describe("Not given all the fields", () => {});
+  describe("Not given all the fields", () => {
+    it("should return 400 statusCode if email is missing", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "",
+        password: "Kunal@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+
+      // Assert
+      expect(response.statusCode).toBe(400);
+    });
+  });
 });

@@ -104,6 +104,49 @@ describe("POST /users/register", () => {
       expect(users[0]).toHaveProperty("role");
       expect(users[0].role).toBe(Roles.CUSTOMER);
     });
+
+    it("should store the hashed password in db", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "Kunal@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      await request(app).post("/auth/register").send(user);
+
+      // Assert
+      const userRepo = connection.getRepository(User);
+      const users = await userRepo.find();
+      expect(users[0].password).not.toBe(user.password);
+      expect(users[0].password).toHaveLength(60);
+      expect(users[0].password).toMatch(/^\$2b\$10\$/);
+    });
+
+    it("should return 400 statusCode if email is already registered", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "Kunal@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const userRepo = connection.getRepository(User);
+      await userRepo.save({ ...user, role: Roles.CUSTOMER });
+
+      const users = await userRepo.find();
+
+      // Assert
+      const response = await request(app).post("/auth/register").send(user);
+      expect(response.statusCode).toBe(400);
+      expect(users).toHaveLength(1);
+    });
   });
   describe("Not given all the fields", () => {});
 });

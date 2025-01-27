@@ -7,6 +7,13 @@ export class UserService {
   constructor(private userRepository: Repository<User>) {}
 
   async createUser({ firstName, lastName, email, password, address, role }: IUser): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email: email } });
+
+    if (user) {
+      const error = createHttpError(400, "User with this email already exists");
+      throw error;
+    }
+
     try {
       return await this.userRepository.save({
         firstName,

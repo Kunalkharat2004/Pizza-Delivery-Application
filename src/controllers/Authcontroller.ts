@@ -3,6 +3,7 @@ import { RegisterRequest } from "../types";
 import { UserService } from "../services";
 import { Logger } from "winston";
 import { Roles } from "../constants";
+import bcrypt from "bcrypt";
 
 export class AuthController {
   constructor(
@@ -12,6 +13,11 @@ export class AuthController {
 
   async register(req: RegisterRequest, res: Response, next: NextFunction) {
     const { firstName, lastName, email, password, address } = req.body;
+
+    // Hash the password using bcrypt
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     this.logger.debug(`Userdata:}`, {
       firstName,
       lastName,
@@ -25,7 +31,7 @@ export class AuthController {
         firstName,
         lastName,
         email,
-        password,
+        password: hashedPassword,
         address,
         role: Roles.CUSTOMER,
       });

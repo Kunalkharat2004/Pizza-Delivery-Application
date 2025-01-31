@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { DataSource } from "typeorm";
 import app from "../../app";
 import request from "supertest";
@@ -28,7 +30,7 @@ describe("POST /users/register", () => {
         firstName: "John",
         lastName: "Doe",
         email: "johndoe@gmail.com",
-        password: "password",
+        password: "secret@123",
         address: "Sans Francisco",
       };
       const response = await request(app).post("/auth/register").send(user);
@@ -40,7 +42,7 @@ describe("POST /users/register", () => {
         firstName: "John",
         lastName: "Doe",
         email: "johndoe@gmail.com",
-        password: "password",
+        password: "secret@123",
         address: "Sans Francisco",
       };
       const response = await request(app).post("/auth/register").send(user);
@@ -53,7 +55,7 @@ describe("POST /users/register", () => {
         firstName: "Kunal",
         lastName: "Kharat",
         email: "kunalkharat@gmail.com",
-        password: "Kunal@123",
+        password: "secret@123",
         address: "Pune, India",
       };
 
@@ -76,7 +78,7 @@ describe("POST /users/register", () => {
         firstName: "Kunal",
         lastName: "Kharat",
         email: "kunalkharat@gmail.com",
-        password: "Kunal@123",
+        password: "secret@123",
         address: "Pune, India",
       };
 
@@ -93,7 +95,7 @@ describe("POST /users/register", () => {
         firstName: "Kunal",
         lastName: "Kharat",
         email: "kunalkharat@gmail.com",
-        password: "Kunal@123",
+        password: "secret@123",
         address: "Pune, India",
       };
 
@@ -111,7 +113,7 @@ describe("POST /users/register", () => {
         firstName: "Kunal",
         lastName: "Kharat",
         email: "kunalkharat@gmail.com",
-        password: "Kunal@123",
+        password: "secret@123",
         address: "Pune, India",
       };
 
@@ -132,7 +134,7 @@ describe("POST /users/register", () => {
         firstName: "Kunal",
         lastName: "Kharat",
         email: "kunalkharat@gmail.com",
-        password: "Kunal@123",
+        password: "secret@123",
         address: "Pune, India",
       };
 
@@ -155,7 +157,7 @@ describe("POST /users/register", () => {
         firstName: "Kunal",
         lastName: "Kharat",
         email: "",
-        password: "Kunal@123",
+        password: "secret@123",
         address: "Pune, India",
       };
 
@@ -163,7 +165,154 @@ describe("POST /users/register", () => {
       const response = await request(app).post("/auth/register").send(user);
 
       // Assert
+      const users = await connection.getRepository(User).find();
       expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty("errors");
+
+      response.body.errors.forEach((error: { msg: string }) => {
+        expect(error).toHaveProperty("msg");
+        expect(error.msg).toBeDefined();
+        expect(users).toHaveLength(0);
+      });
+    });
+
+    it("should return 400 statusCode if password is missing", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat2004@gmail.com",
+        password: "",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+
+      const users = await connection.getRepository(User).find();
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty("errors");
+      expect(users).toHaveLength(0);
+    });
+
+    it("should return 400 statusCode if firstName is missing", async () => {
+      // Arrange
+      const user = {
+        firstName: "",
+        lastName: "Kharat",
+        email: "kunalkharat2004@gmail.com",
+        password: "secret@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+
+      const users = await connection.getRepository(User).find();
+      // Assert
+
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty("errors");
+      expect(users).toHaveLength(0);
+    });
+    it("should return 400 statusCode if lastName is missing", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "",
+        email: "kunalkharat2004@gmail.com",
+        password: "secret@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+
+      const users = await connection.getRepository(User).find();
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty("errors");
+      expect(users).toHaveLength(0);
+    });
+    it("should return 400 statusCode if address is missing", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat2004@gmail.com",
+        password: "secret@123",
+        address: "",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+
+      const users = await connection.getRepository(User).find();
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty("errors");
+      expect(users).toHaveLength(0);
+    });
+  });
+
+  describe("Fields not in proper format", () => {
+    it("should return 400 statusCode if email is not in proper format", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat",
+        password: "secret@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+      const users = await connection.getRepository(User).find();
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(response.body).toHaveProperty("errors");
+      expect(users).toHaveLength(0);
+
+      response.body.errors.forEach((error: { msg: string }) => {
+        expect(error).toHaveProperty("msg");
+        expect(error.msg).toBeDefined();
+      });
+    });
+    it("should return 400 if password lenght is less than 8 characters", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat",
+        password: "secret",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+      const users = await connection.getRepository(User).find();
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(users).toHaveLength(0);
+    });
+    it("should return 400 if password doesn't contain atleast 1 uppercase character,1 lower case character, 1 special character and 1 number", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat",
+        password: "secret",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+      const users = await connection.getRepository(User).find();
+      // Assert
+      expect(response.statusCode).toBe(400);
+      expect(users).toHaveLength(0);
     });
   });
 });

@@ -7,6 +7,7 @@ import { AppDataSource } from "../../config/data-source";
 import { User } from "../../entity/User";
 import { RegisterResponse } from "../../types";
 import { Roles } from "../../constants";
+import { isJWT } from "../utils";
 
 describe("POST /users/register", () => {
   let connection: DataSource;
@@ -253,6 +254,42 @@ describe("POST /users/register", () => {
       expect(response.statusCode).toBe(400);
       expect(response.body).toHaveProperty("errors");
       expect(users).toHaveLength(0);
+    });
+    it("should set the accessToken and refreshToken in the cookie", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "secret@123",
+        address: "Pune, India",
+      };
+
+      let accessToken = null;
+      let refreshToken = null;
+
+      interface Headers {
+        ["set-cookie"]?: Array<string>;
+      }
+
+      const response = await request(app).post("/auth/register").send(user);
+      const cookies = (response.headers as Headers)["set-cookie"] || [];
+
+      cookies.forEach((cookie: string) => {
+        if (cookie.startsWith("accessToken=")) {
+          accessToken = cookie.split(";")[0].split("=").at(-1);
+        }
+        if (cookie.startsWith("refreshToken=")) {
+          refreshToken = cookie.split(";")[0].split("=").at(-1);
+        }
+      });
+      // console.log("Access Token is: ",accessToken);
+      // console.log("Refresh Token is: ",refreshToken);
+
+      // Assert
+      expect(accessToken).not.toBeNull();
+      expect(refreshToken).not.toBeNull();
+      expect(isJWT(accessToken)).toBeTruthy();
     });
   });
 

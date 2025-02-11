@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import fs from "fs";
 import { NextFunction, Response } from "express";
 import { RegisterRequest } from "../types";
 import { UserService } from "../services";
@@ -5,8 +7,9 @@ import { Logger } from "winston";
 import { Roles } from "../constants";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import * as fs from "fs";
 import path from "path";
+import createHttpError from "http-errors";
+import config from "../config/config";
 
 export class AuthController {
   constructor(
@@ -45,7 +48,15 @@ export class AuthController {
         sub: String(user.id),
         role: user.role,
       };
-      const privateKey = fs.readFileSync(path.join(__dirname, "../../certs/private.pem"));
+
+      let privateKey: Buffer;
+
+      try {
+        privateKey = fs.readFileSync(path.join(__dirname, "../../certs/private.pem"));
+      } catch (err) {
+        const error = createHttpError(500, "Error while reading private key");
+        return next(error);
+      }
 
       const accessToken = jwt.sign(payload, privateKey, {
         algorithm: "RS256",
@@ -55,7 +66,11 @@ export class AuthController {
 
       // console.log("Access token: ",accessToken);
 
-      const refreshToken = "adsfjaklsdfjaoif";
+      const refreshToken = jwt.sign(payload, String(config.REFRESH_TOKEN_SECRET), {
+        algorithm: "HS256",
+        expiresIn: "1y",
+        issuer: "auth-service",
+      });
 
       res.cookie("accessToken", accessToken, {
         domain: "localhost",

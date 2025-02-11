@@ -290,6 +290,7 @@ describe("POST /users/register", () => {
       expect(accessToken).not.toBeNull();
       expect(refreshToken).not.toBeNull();
       expect(isJWT(accessToken)).toBeTruthy();
+      expect(isJWT(refreshToken)).toBeTruthy();
     });
   });
 

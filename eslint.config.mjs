@@ -15,16 +15,15 @@ export default tseslint.config(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
-      sourceType:"module",
+      sourceType: "module", 
     },
   },
   {
     rules: {
-      // "dot-notation": "error",
       "no-unused-vars": "off",
       "no-console": "error",
       "@typescript-eslint/no-misused-promises": "off",
-      "@typescript-eslint/no-floating-promises":"off",
+      "@typescript-eslint/no-floating-promises": "off",
     },
   }
 );

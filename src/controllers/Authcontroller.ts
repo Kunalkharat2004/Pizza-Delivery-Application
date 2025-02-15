@@ -1,20 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import fs from "fs";
 import { NextFunction, Response } from "express";
 import { RegisterRequest } from "../types";
-import { UserService } from "../services";
+import { UserService } from "../services/User";
 import { Logger } from "winston";
 import { Roles } from "../constants";
 import bcrypt from "bcrypt";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import path from "path";
-import createHttpError from "http-errors";
-import config from "../config/config";
+import { JwtPayload } from "jsonwebtoken";
+import { RefreshToken } from "../entity/RefreshToken";
+import TokenService from "../services/TokenService";
+import { Repository } from "typeorm";
 
 export class AuthController {
   constructor(
     private userService: UserService,
-    private logger: Logger
+    private logger: Logger,
+    private tokenService: TokenService,
+    private refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
   async register(req: RegisterRequest, res: Response, next: NextFunction) {
@@ -49,28 +49,9 @@ export class AuthController {
         role: user.role,
       };
 
-      let privateKey: Buffer;
+      const accessToken = this.tokenService.generateAccessToken(payload);
 
-      try {
-        privateKey = fs.readFileSync(path.join(__dirname, "../../certs/private.pem"));
-      } catch (err) {
-        const error = createHttpError(500, "Error while reading private key");
-        return next(error);
-      }
-
-      const accessToken = jwt.sign(payload, privateKey, {
-        algorithm: "RS256",
-        expiresIn: "1h",
-        issuer: "auth-service",
-      });
-
-      // console.log("Access token: ",accessToken);
-
-      const refreshToken = jwt.sign(payload, String(config.REFRESH_TOKEN_SECRET), {
-        algorithm: "HS256",
-        expiresIn: "1y",
-        issuer: "auth-service",
-      });
+      const refreshToken = await this.tokenService.generateRefreshToken(payload, user, this.refreshTokenRepository);
 
       res.cookie("accessToken", accessToken, {
         domain: "localhost",

@@ -1,17 +1,21 @@
 import { NextFunction, Request, Response, Router } from "express";
 import { AuthController } from "../controllers/Authcontroller";
-import { UserService } from "../services";
+import { UserService } from "../services/User";
 import { AppDataSource } from "../config/data-source";
 import { User } from "../entity/User";
 import logger from "../config/logger";
 import validateUserCredentials from "../validator/register-validation";
 import validateRequest from "../middlewares/validate-request";
+import TokenService from "../services/TokenService";
+import { RefreshToken } from "../entity/RefreshToken";
 
 const router = Router();
 
 const userRepository = AppDataSource.getRepository(User);
+const refreshTokenRepository = AppDataSource.getRepository(RefreshToken);
 const userService = new UserService(userRepository);
-const authController = new AuthController(userService, logger);
+const tokenService = new TokenService();
+const authController = new AuthController(userService, logger, tokenService, refreshTokenRepository);
 
 router.post("/register", validateUserCredentials, validateRequest, (req: Request, res: Response, next: NextFunction) =>
   authController.register(req, res, next)

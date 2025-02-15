@@ -8,6 +8,7 @@ import { User } from "../../entity/User";
 import { RegisterResponse } from "../../types";
 import { Roles } from "../../constants";
 import { isJWT } from "../utils";
+import { RefreshToken } from "../../entity/RefreshToken";
 
 describe("POST /users/register", () => {
   let connection: DataSource;
@@ -150,7 +151,31 @@ describe("POST /users/register", () => {
       expect(response.statusCode).toBe(400);
       expect(users).toHaveLength(1);
     });
+
+    it("should persist refreshToken in the database", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "secret@123",
+        address: "Pune, India",
+      };
+
+      // Act
+      const response = await request(app).post("/auth/register").send(user);
+
+      // Assert
+      const refreshTokenRepo = connection.getRepository(RefreshToken);
+      const tokens = await refreshTokenRepo
+        .createQueryBuilder("refreshToken")
+        .where("refreshToken.userId = :userId", { userId: (response.body as Record<string, string>).id })
+        .getMany();
+
+      expect(tokens).toHaveLength(1);
+    });
   });
+
   describe("Not given all the fields", () => {
     it("should return 400 statusCode if email is missing", async () => {
       // Arrange

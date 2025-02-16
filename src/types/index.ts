@@ -13,7 +13,12 @@ export interface RegisterRequest extends Request {
   body: IUser;
 }
 
-export interface RegisterResponse {
+export interface AuthResponse {
   message: string;
   id: number;
+  errors: Array<{ msg: string }>;
+}
+
+export interface AuthHeaders {
+  ["set-cookie"]?: Array<string>;
 }

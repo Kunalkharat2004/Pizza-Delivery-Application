@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { DataSource } from "typeorm";
 import app from "../../app";
 import request from "supertest";
 import { AppDataSource } from "../../config/data-source";
 import { User } from "../../entity/User";
-import { RegisterResponse } from "../../types";
+import { AuthHeaders, AuthResponse } from "../../types";
 import { Roles } from "../../constants";
 import { isJWT } from "../utils";
 import { RefreshToken } from "../../entity/RefreshToken";
@@ -86,7 +84,7 @@ describe("POST /users/register", () => {
 
       // Act
       const response = await request(app).post("/auth/register").send(user);
-      const responseBody = response.body as RegisterResponse;
+      const responseBody = response.body as AuthResponse;
       expect(responseBody.id).toBeDefined();
       expect(responseBody.message).toBe("User created successfully");
     });
@@ -152,6 +150,40 @@ describe("POST /users/register", () => {
       expect(users).toHaveLength(1);
     });
 
+    it("should set the accessToken and refreshToken in the cookie", async () => {
+      // Arrange
+      const user = {
+        firstName: "Kunal",
+        lastName: "Kharat",
+        email: "kunalkharat@gmail.com",
+        password: "secret@123",
+        address: "Pune, India",
+      };
+
+      let accessToken: string | null = null;
+      let refreshToken: string | null = null;
+
+      const response = await request(app).post("/auth/register").send(user);
+      const cookies = (response.headers as AuthHeaders)["set-cookie"] || [];
+
+      cookies.forEach((cookie: string) => {
+        if (cookie.startsWith("accessToken=")) {
+          accessToken = cookie.split(";")[0].split("=").at(-1) ?? null;
+        }
+        if (cookie.startsWith("refreshToken=")) {
+          refreshToken = cookie.split(";")[0].split("=").at(-1) ?? null;
+        }
+      });
+      // console.log("Access Token is: ",accessToken);
+      // console.log("Refresh Token is: ",refreshToken);
+
+      // Assert
+      expect(accessToken).not.toBeNull();
+      expect(refreshToken).not.toBeNull();
+      expect(isJWT(accessToken)).toBeTruthy();
+      expect(isJWT(refreshToken)).toBeTruthy();
+    });
+
     it("should persist refreshToken in the database", async () => {
       // Arrange
       const user = {
@@ -195,7 +227,7 @@ describe("POST /users/register", () => {
       expect(response.statusCode).toBe(400);
       expect(response.body).toHaveProperty("errors");
 
-      response.body.errors.forEach((error: { msg: string }) => {
+      (response.body as AuthResponse).errors.forEach((error: { msg: string }) => {
         expect(error).toHaveProperty("msg");
         expect(error.msg).toBeDefined();
         expect(users).toHaveLength(0);
@@ -280,43 +312,6 @@ describe("POST /users/register", () => {
       expect(response.body).toHaveProperty("errors");
       expect(users).toHaveLength(0);
     });
-    it("should set the accessToken and refreshToken in the cookie", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
-      let accessToken = null;
-      let refreshToken = null;
-
-      interface Headers {
-        ["set-cookie"]?: Array<string>;
-      }
-
-      const response = await request(app).post("/auth/register").send(user);
-      const cookies = (response.headers as Headers)["set-cookie"] || [];
-
-      cookies.forEach((cookie: string) => {
-        if (cookie.startsWith("accessToken=")) {
-          accessToken = cookie.split(";")[0].split("=").at(-1);
-        }
-        if (cookie.startsWith("refreshToken=")) {
-          refreshToken = cookie.split(";")[0].split("=").at(-1);
-        }
-      });
-      // console.log("Access Token is: ",accessToken);
-      // console.log("Refresh Token is: ",refreshToken);
-
-      // Assert
-      expect(accessToken).not.toBeNull();
-      expect(refreshToken).not.toBeNull();
-      expect(isJWT(accessToken)).toBeTruthy();
-      expect(isJWT(refreshToken)).toBeTruthy();
-    });
   });
 
   describe("Fields not in proper format", () => {
@@ -338,7 +333,7 @@ describe("POST /users/register", () => {
       expect(response.body).toHaveProperty("errors");
       expect(users).toHaveLength(0);
 
-      response.body.errors.forEach((error: { msg: string }) => {
+      (response.body as AuthResponse).errors.forEach((error: { msg: string }) => {
         expect(error).toHaveProperty("msg");
         expect(error.msg).toBeDefined();
       });

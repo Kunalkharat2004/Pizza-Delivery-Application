@@ -8,6 +8,7 @@ import { JwtPayload } from "jsonwebtoken";
 import { RefreshToken } from "../entity/RefreshToken";
 import TokenService from "../services/TokenService";
 import { Repository } from "typeorm";
+import createHttpError from "http-errors";
 
 export class AuthController {
   constructor(
@@ -65,12 +66,61 @@ export class AuthController {
         httpOnly: true,
         secure: true,
         sameSite: "strict",
-        maxAge: 1000 * 60 * 60, // 1 hour
+        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
       });
 
       res.status(201).json({
         message: "User created successfully",
         id: user.id,
+      });
+    } catch (error) {
+      next(error);
+      return;
+    }
+  }
+
+  async login(req: RegisterRequest, res: Response, next: NextFunction) {
+    try {
+      const { email, password } = req.body;
+
+      // Check if the user exists in the database
+      const user = await this.userService.checkUserByEmail(email);
+
+      // Compare the password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        const error = createHttpError(401, "Invalid email or password");
+        next(error);
+        return;
+      }
+
+      const payload: JwtPayload = {
+        sub: String(user.id),
+        role: user.role,
+      };
+
+      const accessToken = this.tokenService.generateAccessToken(payload);
+
+      const refreshToken = await this.tokenService.generateRefreshToken(payload, user, this.refreshTokenRepository);
+
+      res.cookie("accessToken", accessToken, {
+        domain: "localhost",
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60, // 1 hour
+      });
+      res.cookie("refreshToken", refreshToken, {
+        domain: "localhost",
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
+      });
+
+      res.status(200).json({
+        message: "Login successful",
       });
     } catch (error) {
       next(error);

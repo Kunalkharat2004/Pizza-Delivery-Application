@@ -8,6 +8,7 @@ import validateUserCredentials from "../validator/register-validation";
 import validateRequest from "../middlewares/validate-request";
 import TokenService from "../services/TokenService";
 import { RefreshToken } from "../entity/RefreshToken";
+import validateLoginCredentials from "../validator/login-validation";
 
 const router = Router();
 
@@ -19,6 +20,9 @@ const authController = new AuthController(userService, logger, tokenService, ref
 
 router.post("/register", validateUserCredentials, validateRequest, (req: Request, res: Response, next: NextFunction) =>
   authController.register(req, res, next)
+);
+router.post("/login", validateLoginCredentials, validateRequest, (req: Request, res: Response, next: NextFunction) =>
+  authController.login(req, res, next)
 );
 
 export default router;

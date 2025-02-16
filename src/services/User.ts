@@ -30,4 +30,15 @@ export class UserService {
       throw error;
     }
   }
+
+  async checkUserByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email: email } });
+
+    if (!user) {
+      const error = createHttpError(401, "Invalid email or password");
+      throw error;
+    }
+
+    return user;
+  }
 }

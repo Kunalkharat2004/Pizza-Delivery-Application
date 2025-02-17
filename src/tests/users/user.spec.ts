@@ -69,7 +69,9 @@ describe("GET /auth/self", () => {
       // Add Access Token to the request header as Cookie
       const response = await request(app).get("/auth/self").set("Cookie", `accessToken=${accessToken}`).send();
       // Assert
+
       expect((response.body as Record<string, string>).id).toBe(data.id);
+      expect((response.body as Record<string, string>).password).toBe("********");
     });
   });
 });

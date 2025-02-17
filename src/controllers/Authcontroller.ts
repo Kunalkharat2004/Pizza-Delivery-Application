@@ -132,8 +132,6 @@ export class AuthController {
   async self(req: AuthRequest, res: Response) {
     const data = await this.userService.getUserById(req.auth.sub);
 
-    res.status(200).json({
-      id: data.id,
-    });
+    res.status(200).json({ ...data, password: "********" });
   }
 }

@@ -17,6 +17,7 @@ describe("GET /auth/self", () => {
   };
 
   let jwksMock: JWKSMock;
+  let stopJwks: () => void;
 
   beforeAll(async () => {
     jwksMock = createJWKSMock("http://localhost:3200");
@@ -25,13 +26,13 @@ describe("GET /auth/self", () => {
   });
 
   beforeEach(async () => {
-    jwksMock.start();
+    stopJwks = jwksMock.start();
     await connection.dropDatabase();
     await connection.synchronize();
   });
 
   afterEach(() => {
-    jwksMock.stop();
+    stopJwks();
   });
 
   afterAll(async () => {

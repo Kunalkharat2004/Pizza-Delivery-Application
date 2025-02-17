@@ -2,10 +2,12 @@ import "reflect-metadata";
 import express, { Request, Response, Express } from "express";
 import authRoute from "./routes/authRoute";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
+import cookieParser from "cookie-parser";
 
 const app: Express = express(); // Removed explicit type annotation
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.get("/", (req: Request, res: Response) => {
   res.json({

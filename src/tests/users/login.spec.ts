@@ -45,7 +45,7 @@ describe("POST /auth/login", () => {
 
       // Assert
       expect(response.header["content-type"]).toBe("application/json; charset=utf-8");
-      // expect(response.body).toHaveProperty("id");
+      expect(response.body).toHaveProperty("id");
       expect(response.body).toHaveProperty("message");
     });
 

@@ -9,6 +9,8 @@ import validateRequest from "../middlewares/validate-request";
 import TokenService from "../services/TokenService";
 import { RefreshToken } from "../entity/RefreshToken";
 import validateLoginCredentials from "../validator/login-validation";
+import authenticate from "../middlewares/authenticate";
+import { AuthRequest } from "../types";
 
 const router = Router();
 
@@ -21,8 +23,11 @@ const authController = new AuthController(userService, logger, tokenService, ref
 router.post("/register", validateUserCredentials, validateRequest, (req: Request, res: Response, next: NextFunction) =>
   authController.register(req, res, next)
 );
+
 router.post("/login", validateLoginCredentials, validateRequest, (req: Request, res: Response, next: NextFunction) =>
   authController.login(req, res, next)
 );
+
+router.get("/self", authenticate, (req: Request, res: Response) => authController.self(req as AuthRequest, res));
 
 export default router;

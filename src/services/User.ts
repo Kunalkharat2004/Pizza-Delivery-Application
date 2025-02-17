@@ -2,6 +2,7 @@ import { Repository } from "typeorm";
 import { User } from "../entity/User";
 import { IUser } from "../types";
 import createHttpError from "http-errors";
+import bcrypt from "bcrypt";
 
 export class UserService {
   constructor(private userRepository: Repository<User>) {}
@@ -33,6 +34,21 @@ export class UserService {
 
   async checkUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { email: email } });
+
+    if (!user) {
+      const error = createHttpError(401, "Invalid email or password");
+      throw error;
+    }
+
+    return user;
+  }
+
+  async isPasswordMatched(password: string, user: User) {
+    return await bcrypt.compare(password, user.password);
+  }
+
+  async getUserById(id: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: id } });
 
     if (!user) {
       const error = createHttpError(401, "Invalid email or password");

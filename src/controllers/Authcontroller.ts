@@ -1,5 +1,5 @@
 import { NextFunction, Response } from "express";
-import { RegisterRequest } from "../types";
+import { AuthRequest, RegisterRequest } from "../types";
 import { UserService } from "../services/User";
 import { Logger } from "winston";
 import { Roles } from "../constants";
@@ -87,7 +87,7 @@ export class AuthController {
       const user = await this.userService.checkUserByEmail(email);
 
       // Compare the password
-      const isPasswordValid = await bcrypt.compare(password, user.password);
+      const isPasswordValid = await this.userService.isPasswordMatched(password, user);
 
       if (!isPasswordValid) {
         const error = createHttpError(401, "Invalid email or password");
@@ -121,10 +121,19 @@ export class AuthController {
 
       res.status(200).json({
         message: "Login successful",
+        id: user.id,
       });
     } catch (error) {
       next(error);
       return;
     }
+  }
+
+  async self(req: AuthRequest, res: Response) {
+    const data = await this.userService.getUserById(req.auth.sub);
+
+    res.status(200).json({
+      id: data.id,
+    });
   }
 }

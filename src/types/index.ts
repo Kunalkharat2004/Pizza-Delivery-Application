@@ -22,3 +22,10 @@ export interface AuthResponse {
 export interface AuthHeaders {
   ["set-cookie"]?: Array<string>;
 }
+
+export interface AuthRequest extends Request {
+  auth: {
+    sub: string;
+  };
+  role: string;
+}

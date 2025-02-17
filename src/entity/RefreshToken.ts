@@ -4,7 +4,7 @@ import { User } from "./User";
 @Entity()
 export class RefreshToken {
   @PrimaryGeneratedColumn("uuid")
-  id: number;
+  id: string;
 
   @Column()
   expiryAt: Date;

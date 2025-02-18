@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 
 const app: Express = express(); // Removed explicit type annotation
 
+app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 

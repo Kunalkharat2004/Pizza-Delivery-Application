@@ -6,8 +6,7 @@ import path from "path";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const globalErrorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
-  const statusCode = err.statusCode || 500;
-
+  const statusCode = err.statusCode || err.status || 500;
   logger.error(err.message);
 
   res.status(statusCode).json({

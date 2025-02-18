@@ -73,5 +73,13 @@ describe("GET /auth/self", () => {
       expect((response.body as Record<string, string>).id).toBe(data.id);
       expect((response.body as Record<string, string>).password).toBe("********");
     });
+
+    it("it should return 401 status code if accessToken not found in cookie", async () => {
+      // Act
+      const response = await request(app).get("/auth/self").send();
+
+      // Assert
+      expect(response.status).toBe(401);
+    });
   });
 });

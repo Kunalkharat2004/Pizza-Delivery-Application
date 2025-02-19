@@ -18,6 +18,23 @@ export class AuthController {
     private refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
+  setCookies(res: Response, accessToken: string, refreshToken: string) {
+    res.cookie("accessToken", accessToken, {
+      domain: "localhost",
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60, // 1 hour
+    });
+    res.cookie("refreshToken", refreshToken, {
+      domain: "localhost",
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
+    });
+  }
+
   async register(req: RegisterRequest, res: Response, next: NextFunction) {
     const { firstName, lastName, email, password, address } = req.body;
 
@@ -56,20 +73,7 @@ export class AuthController {
 
       const refreshToken = this.tokenService.generateRefreshToken(payload, refreshTokenRefrence);
 
-      res.cookie("accessToken", accessToken, {
-        domain: "localhost",
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 1000 * 60 * 60, // 1 hour
-      });
-      res.cookie("refreshToken", refreshToken, {
-        domain: "localhost",
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
-      });
+      this.setCookies(res, accessToken, refreshToken);
 
       res.status(201).json({
         message: "User created successfully",
@@ -108,19 +112,7 @@ export class AuthController {
 
       const refreshToken = this.tokenService.generateRefreshToken(payload, refreshTokenRefrence);
 
-      res.cookie("accessToken", accessToken, {
-        domain: "localhost",
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-      });
-      res.cookie("refreshToken", refreshToken, {
-        domain: "localhost",
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
-      });
+      this.setCookies(res, accessToken, refreshToken);
 
       res.status(200).json({
         message: "Login successful",
@@ -146,6 +138,7 @@ export class AuthController {
 
     // Generate a new AccessToken
     const accessToken = this.tokenService.generateAccessToken(payload);
+    this.logger.info("Created new access token");
 
     // Persist the new RefreshToken in database
 
@@ -153,27 +146,17 @@ export class AuthController {
 
     // Delete the old RefreshToken
     await this.tokenService.deleteRefreshToken(this.refreshTokenRepository, req.auth.jti);
+    this.logger.info("Deleted old refresh token");
 
     const refreshTokenRefrence = await this.tokenService.persistRefreshToken(user, this.refreshTokenRepository);
 
     // Generate a new RefreshToken
     const refreshToken = this.tokenService.generateRefreshToken(payload, refreshTokenRefrence);
+    this.logger.info("Created new refresh token");
 
-    res
-      .cookie("accessToken", accessToken, {
-        domain: "localhost",
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 1000 * 60 * 60, // 1 hour
-      })
-      .cookie("refreshToken", refreshToken, {
-        domain: "localhost",
-        httpOnly: true,
-        secure: true,
-        sameSite: "strict",
-        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
-      });
+    // Set the cookies
+    this.setCookies(res, accessToken, refreshToken);
+    this.logger.info("Successfully set the cookies");
 
     res.status(200).json({
       message: "Token refreshed successfully",

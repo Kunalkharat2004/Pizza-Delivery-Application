@@ -150,7 +150,7 @@ describe("POST /users/register", () => {
       expect(users).toHaveLength(1);
     });
 
-    it("should set the accessToken and refreshToken in the cookie", async () => {
+    it("should extract the accessToken and refreshToken from the cookie", async () => {
       // Arrange
       const user = {
         firstName: "Kunal",

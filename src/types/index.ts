@@ -26,6 +26,16 @@ export interface AuthHeaders {
 export interface AuthRequest extends Request {
   auth: {
     sub: string;
+    role: string;
+    jti: string;
   };
-  role: string;
+}
+
+export type AuthCookie = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+export interface IRefreshtoken {
+  jti: string;
 }

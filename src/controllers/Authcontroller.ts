@@ -52,7 +52,9 @@ export class AuthController {
 
       const accessToken = this.tokenService.generateAccessToken(payload);
 
-      const refreshToken = await this.tokenService.generateRefreshToken(payload, user, this.refreshTokenRepository);
+      const refreshTokenRefrence = await this.tokenService.persistRefreshToken(user, this.refreshTokenRepository);
+
+      const refreshToken = this.tokenService.generateRefreshToken(payload, refreshTokenRefrence);
 
       res.cookie("accessToken", accessToken, {
         domain: "localhost",
@@ -96,20 +98,21 @@ export class AuthController {
       }
 
       const payload: JwtPayload = {
-        sub: String(user.id),
+        sub: user.id,
         role: user.role,
       };
 
       const accessToken = this.tokenService.generateAccessToken(payload);
 
-      const refreshToken = await this.tokenService.generateRefreshToken(payload, user, this.refreshTokenRepository);
+      const refreshTokenRefrence = await this.tokenService.persistRefreshToken(user, this.refreshTokenRepository);
+
+      const refreshToken = this.tokenService.generateRefreshToken(payload, refreshTokenRefrence);
 
       res.cookie("accessToken", accessToken, {
         domain: "localhost",
         httpOnly: true,
         secure: true,
         sameSite: "strict",
-        maxAge: 1000 * 60 * 60, // 1 hour
       });
       res.cookie("refreshToken", refreshToken, {
         domain: "localhost",
@@ -133,5 +136,48 @@ export class AuthController {
     const data = await this.userService.getUserById(req.auth.sub);
 
     res.status(200).json({ ...data, password: "********" });
+  }
+
+  async refresh(req: AuthRequest, res: Response) {
+    const payload: JwtPayload = {
+      sub: req.auth.sub,
+      role: req.auth.role,
+    };
+
+    // Generate a new AccessToken
+    const accessToken = this.tokenService.generateAccessToken(payload);
+
+    // Persist the new RefreshToken in database
+
+    const user = await this.userService.getUserById(req.auth.sub);
+
+    // Delete the old RefreshToken
+    await this.tokenService.deleteRefreshToken(this.refreshTokenRepository, req.auth.jti);
+
+    const refreshTokenRefrence = await this.tokenService.persistRefreshToken(user, this.refreshTokenRepository);
+
+    // Generate a new RefreshToken
+    const refreshToken = this.tokenService.generateRefreshToken(payload, refreshTokenRefrence);
+
+    res
+      .cookie("accessToken", accessToken, {
+        domain: "localhost",
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60, // 1 hour
+      })
+      .cookie("refreshToken", refreshToken, {
+        domain: "localhost",
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        maxAge: 1000 * 60 * 60 * 24 * 365, // 1 year
+      });
+
+    res.status(200).json({
+      message: "Token refreshed successfully",
+      id: req.auth.jti,
+    });
   }
 }

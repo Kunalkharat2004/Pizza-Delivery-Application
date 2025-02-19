@@ -6,7 +6,7 @@ import { AppDataSource } from "../config/data-source";
 import { RefreshToken } from "../entity/RefreshToken";
 import logger from "../config/logger";
 
-export default expressjwt({
+export const validate_And_Check_IsRevoked_RefreshToken = expressjwt({
   secret: config.REFRESH_TOKEN_SECRET!,
   algorithms: ["HS256"],
   getToken: (req: Request) => {
@@ -32,5 +32,14 @@ export default expressjwt({
       });
     }
     return true;
+  },
+});
+
+export const validateRefreshToken = expressjwt({
+  secret: config.REFRESH_TOKEN_SECRET!,
+  algorithms: ["HS256"],
+  getToken: (req: Request) => {
+    const { refreshToken } = req.cookies as AuthCookie;
+    return refreshToken;
   },
 });

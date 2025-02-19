@@ -127,7 +127,7 @@ export class AuthController {
   async self(req: AuthRequest, res: Response) {
     const data = await this.userService.getUserById(req.auth.sub);
 
-    res.status(200).json({ ...data, password: "********" });
+    res.json({ ...data, password: "********" });
   }
 
   async refresh(req: AuthRequest, res: Response) {
@@ -162,5 +162,19 @@ export class AuthController {
       message: "Token refreshed successfully",
       id: req.auth.jti,
     });
+  }
+
+  async logout(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      // Delete the refreshToken from the database
+      await this.tokenService.deleteRefreshToken(this.refreshTokenRepository, req.auth.jti);
+
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+      res.json({});
+    } catch (err) {
+      next(err);
+      return;
+    }
   }
 }

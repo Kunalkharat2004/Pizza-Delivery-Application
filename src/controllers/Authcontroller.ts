@@ -114,6 +114,7 @@ export class AuthController {
 
       this.setCookies(res, accessToken, refreshToken);
 
+      this.logger.info(`User logged in successfully`, { id: user.id });
       res.status(200).json({
         message: "Login successful",
         id: user.id,
@@ -168,6 +169,8 @@ export class AuthController {
     try {
       // Delete the refreshToken from the database
       await this.tokenService.deleteRefreshToken(this.refreshTokenRepository, req.auth.jti);
+      this.logger.info("Deleted refresh token", { id: req.auth.jti });
+      this.logger.info("User logged out successfully!", { id: req.auth.sub });
 
       res.clearCookie("accessToken");
       res.clearCookie("refreshToken");

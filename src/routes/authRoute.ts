@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { AuthController } from "../controllers/Authcontroller";
 import { UserService } from "../services/User";
 import { AppDataSource } from "../config/data-source";
 import { User } from "../entity/User";
@@ -12,6 +11,7 @@ import validateLoginCredentials from "../validator/login-validation";
 import authenticate from "../middlewares/authenticate";
 import { AuthRequest } from "../types";
 import { validate_And_Check_IsRevoked_RefreshToken, validateRefreshToken } from "../middlewares/validateRefreshToken";
+import { AuthController } from "../controllers/Authcontroller";
 
 const router = Router();
 

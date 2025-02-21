@@ -3,5 +3,5 @@ import rsaPemToJwk from "rsa-pem-to-jwk";
 
 const privateKey = fs.readFileSync("./certs/private.pem");
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 rsaPemToJwk(privateKey, { use: "sig",alg:"RS256" }, "public");

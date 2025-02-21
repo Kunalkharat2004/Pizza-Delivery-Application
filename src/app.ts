@@ -3,6 +3,7 @@ import express, { Request, Response, Express } from "express";
 import authRoute from "./routes/authRoute";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 import cookieParser from "cookie-parser";
+import tenantRoute from "./routes/tenantRoute";
 
 const app: Express = express(); // Removed explicit type annotation
 
@@ -17,6 +18,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 app.use("/auth", authRoute);
+app.use("/tenant", tenantRoute);
 
 app.use(globalErrorHandler);
 

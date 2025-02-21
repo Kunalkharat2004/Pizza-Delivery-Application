@@ -39,3 +39,8 @@ export type AuthCookie = {
 export interface IRefreshtoken {
   jti: string;
 }
+
+export interface ITenant {
+  name: string;
+  address: string;
+}

@@ -4,6 +4,7 @@ import { ITenant } from "../types";
 import { Repository } from "typeorm";
 import { Tenant } from "../entity/Tenant";
 import { Logger } from "winston";
+import createHttpError from "http-errors";
 
 export class TenantController {
   constructor(
@@ -20,7 +21,82 @@ export class TenantController {
 
       this.logger.info(`Tenant created, id:${tenant.id}`);
 
-      res.status(201).json({ message: "Tenant created successfully", tenant });
+      res.status(201).json({
+        message: "Tenant created successfully",
+        id: tenant.id,
+      });
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
+
+  async listTenant(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tenants = await this.tenantRepository.find({});
+      res.status(200).json(tenants);
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
+
+  async getTenantById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tenantId = req.params.id;
+      const tenant = await this.tenantRepository.findOneBy({ id: tenantId });
+      if (!tenant) {
+        const error = createHttpError(404, "Tenant not found");
+        next(error);
+        return;
+      }
+      res.json(tenant);
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
+
+  async updateTenant(req: Request, response: Response, next: NextFunction) {
+    try {
+      const tenantId = req.params.id;
+      const { name, address } = req.body as ITenant;
+      const tenant = await this.tenantRepository.findOneBy({ id: tenantId });
+      if (!tenant) {
+        const error = createHttpError(404, "Tenant not found");
+        next(error);
+        return;
+      }
+      tenant.name = name;
+      tenant.address = address;
+      await this.tenantRepository.save(tenant);
+      response.json(tenant);
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
+
+  async deleteTenant(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tenantId = req.params.id;
+      const tenant = await this.tenantRepository.findOneBy({ id: tenantId });
+      if (!tenant) {
+        const error = createHttpError(404, "Tenant not found");
+        next(error);
+        return;
+      } else if (!tenant.id) {
+        const error = createHttpError(404, "Tenant not found");
+        next(error);
+        return;
+      }
+
+      await this.tenantRepository.delete(tenant.id);
+
+      res.json({
+        message: "Tenant deleted successfully",
+        id: tenant.id,
+      });
     } catch (err) {
       next(err);
       return;

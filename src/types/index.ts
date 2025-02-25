@@ -41,6 +41,7 @@ export interface IRefreshtoken {
 }
 
 export interface ITenant {
+  id?: string;
   name: string;
   address: string;
 }

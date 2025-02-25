@@ -88,5 +88,27 @@ describe("POST /tenant", () => {
     });
   });
 
-  describe("Not given all fields", () => {});
+  describe("Not given all fields", () => {
+    it("should return 400 status code if name is missing", async () => {
+      // Act
+      const response = await request(app)
+        .post("/tenant")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...tenantData, name: "" });
+
+      // Assert
+      expect(response.status).toBe(400);
+    });
+
+    it("should return 400 status code if address is missing", async () => {
+      // Act
+      const response = await request(app)
+        .post("/tenant")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...tenantData, address: "" });
+
+      // Assert
+      expect(response.status).toBe(400);
+    });
+  });
 });

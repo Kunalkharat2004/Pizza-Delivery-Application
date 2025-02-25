@@ -75,6 +75,17 @@ describe("POST /tenant", () => {
       expect(response.status).toBe(401);
       expect(tenant).toHaveLength(0);
     });
+
+    it("should return 403 if the user role is not admin", async () => {
+      const managerToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.MANAGER,
+      });
+      //Act
+      const response = await request(app).post("/tenant").set("Cookie", `accessToken=${managerToken}`).send(tenantData);
+
+      expect(response.status).toBe(403);
+    });
   });
 
   describe("Not given all fields", () => {});

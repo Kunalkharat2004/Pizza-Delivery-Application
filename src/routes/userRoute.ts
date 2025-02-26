@@ -41,4 +41,9 @@ router.put(
   (req: Request, res: Response, next: NextFunction) => userController.updateUser(req, res, next)
 );
 
+// DELETE user by id
+router.delete("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: Response, next: NextFunction) =>
+  userController.deleteUser(req, res, next)
+);
+
 export default router;

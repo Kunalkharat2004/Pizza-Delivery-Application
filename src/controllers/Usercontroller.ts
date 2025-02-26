@@ -84,4 +84,20 @@ export class UserController {
       return;
     }
   }
+
+  async deleteUser(req: RegisterRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.id;
+      const user = await this.userService.getUserById(userId);
+      await this.userRepository.delete(user.id);
+
+      res.json({
+        message: "User deleted successfully",
+        id: user.id,
+      });
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
 }

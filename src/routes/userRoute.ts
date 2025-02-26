@@ -14,7 +14,7 @@ import { User } from "../entity/User";
 const router = Router();
 const userRepository = AppDataSource.getRepository(User);
 const userService = new UserService(userRepository);
-const userController = new UserController(logger, userService);
+const userController = new UserController(logger, userService, userRepository);
 
 router.post(
   "/",
@@ -23,6 +23,22 @@ router.post(
   validateUserCredentials,
   validateRequest,
   (req: Request, res: Response, next: NextFunction) => userController.create(req, res, next)
+);
+
+// List of all users
+router.get("/", (req: Request, res: Response, next: NextFunction) => userController.listUsers(req, res, next));
+
+// GET user by id
+router.get("/:id", (req: Request, res: Response, next: NextFunction) => userController.getUserById(req, res, next));
+
+// PUT user by id
+router.put(
+  "/:id",
+  authenticate,
+  canAccess([Roles.ADMIN]),
+  validateUserCredentials,
+  validateRequest,
+  (req: Request, res: Response, next: NextFunction) => userController.updateUser(req, res, next)
 );
 
 export default router;

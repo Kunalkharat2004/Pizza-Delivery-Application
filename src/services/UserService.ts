@@ -37,6 +37,10 @@ export class UserService {
     }
   }
 
+  async listUsers(): Promise<User[]> {
+    return await this.userRepository.find();
+  }
+
   async checkUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { email: email } });
 
@@ -56,7 +60,7 @@ export class UserService {
     const user = await this.userRepository.findOne({ where: { id } });
 
     if (!user) {
-      const error = createHttpError(401, "Invalid email or password");
+      const error = createHttpError(404, "User not found");
       throw error;
     }
 

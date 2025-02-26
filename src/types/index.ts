@@ -7,6 +7,7 @@ export interface IUser {
   password: string;
   address: string;
   role: string;
+  tenantId?: string;
 }
 
 export interface RegisterRequest extends Request {

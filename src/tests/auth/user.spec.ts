@@ -14,6 +14,7 @@ describe("GET /auth/self", () => {
     email: "kunalkharat@gmail.com",
     password: "secret@123",
     address: "Pune, India",
+    tenantId: "123",
   };
 
   let jwksMock: JWKSMock;

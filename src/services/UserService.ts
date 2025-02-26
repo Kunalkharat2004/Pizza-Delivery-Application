@@ -16,11 +16,16 @@ export class UserService {
     }
 
     try {
+      // Hash the password using bcrypt
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      // Save the user to the database
       return await this.userRepository.save({
         firstName,
         lastName,
         email,
-        password,
+        password: hashedPassword,
         address,
         role,
       });

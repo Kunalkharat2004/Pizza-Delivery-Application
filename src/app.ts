@@ -4,6 +4,7 @@ import authRoute from "./routes/authRoute";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 import cookieParser from "cookie-parser";
 import tenantRoute from "./routes/tenantRoute";
+import userRoute from "./routes/userRoute";
 
 const app: Express = express(); // Removed explicit type annotation
 
@@ -19,6 +20,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/auth", authRoute);
 app.use("/tenant", tenantRoute);
+app.use("/users", userRoute);
 
 app.use(globalErrorHandler);
 

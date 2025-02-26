@@ -1,0 +1,28 @@
+import { NextFunction, Router } from "express";
+import { Request, Response } from "express";
+import { AppDataSource } from "../config/data-source";
+import authenticate from "../middlewares/authenticate";
+import { Roles } from "../constants";
+import canAccess from "../middlewares/canAccess";
+import validateRequest from "../middlewares/validate-request";
+import { UserController } from "../controllers/Usercontroller";
+import validateUserCredentials from "../validator/register-validation";
+import logger from "../config/logger";
+import { UserService } from "../services/UserService";
+import { User } from "../entity/User";
+
+const router = Router();
+const userRepository = AppDataSource.getRepository(User);
+const userService = new UserService(userRepository);
+const userController = new UserController(logger, userService);
+
+router.post(
+  "/",
+  authenticate,
+  canAccess([Roles.ADMIN]),
+  validateUserCredentials,
+  validateRequest,
+  (req: Request, res: Response, next: NextFunction) => userController.create(req, res, next)
+);
+
+export default router;

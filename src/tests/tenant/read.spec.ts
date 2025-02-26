@@ -57,5 +57,27 @@ describe("GET /tenant/:id", () => {
       expect(response1.statusCode).toBe(200);
       stopJwks();
     });
+    it("should return 404 status code if tenant doesn't exists", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+      // Arrange
+      const tenantData = {
+        name: "Rajesh Sweet Shop",
+        address: "Pune, India",
+      };
+      const response = await request(app).post("/tenant").set("Cookie", `accessToken=${adminToken}`).send(tenantData);
+      const tenantId = (response.body as ITenant).id;
+      await request(app).delete(`/tenant/${tenantId}`).set("Cookie", `accessToken=${adminToken}`);
+
+      // Act
+      const response2 = await request(app).get(`/tenant/${tenantId}`);
+      // Assert
+      expect(response2.statusCode).toBe(404);
+      stopJwks();
+    });
   });
 });

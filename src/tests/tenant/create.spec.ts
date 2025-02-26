@@ -83,7 +83,11 @@ describe("POST /tenant", () => {
       });
       //Act
       const response = await request(app).post("/tenant").set("Cookie", `accessToken=${managerToken}`).send(tenantData);
+      const tenantRepository = connection.getRepository(Tenant);
+      const tenant = await tenantRepository.find({});
 
+      //Assert
+      expect(tenant).toHaveLength(0);
       expect(response.status).toBe(403);
     });
   });

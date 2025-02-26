@@ -79,7 +79,7 @@ describe("POST /users/register", () => {
 
       // Assert
       const userRepo = connection.getRepository(User);
-      const users = await userRepo.find();
+      const users = await userRepo.find({ select: ["password"] });
       expect(users[0].password).not.toBe(user.password);
       expect(users[0].password).toHaveLength(60);
       expect(users[0].password).toMatch(/^\$2b\$10\$/);

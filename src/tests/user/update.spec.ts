@@ -5,18 +5,24 @@ import { AppDataSource } from "../../config/data-source";
 import { ITenant, IUser } from "../../types";
 import { createJWKSMock, JWKSMock } from "mock-jwks";
 import { Roles } from "../../constants";
+import { createTenant } from "../utils";
+import { Tenant } from "../../entity/Tenant";
 
 describe("PUT /users/:id", () => {
   let connection: DataSource;
   let jwksMock: JWKSMock;
   let adminToken: string;
   let stopJwks: () => void;
+  let tenant: Tenant;
+
   const managerData = {
     firstName: "Shraddha",
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
     address: "Bangalore, India",
+    role: Roles.MANAGER,
+    tenantId: null,
   };
 
   beforeAll(async () => {
@@ -24,6 +30,7 @@ describe("PUT /users/:id", () => {
   });
 
   beforeEach(async () => {
+    tenant = await createTenant(connection.getRepository(Tenant));
     await connection.dropDatabase();
     await connection.synchronize();
   });
@@ -40,7 +47,10 @@ describe("PUT /users/:id", () => {
         sub: "1234567890",
         role: Roles.ADMIN,
       });
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
       const userId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
@@ -57,7 +67,10 @@ describe("PUT /users/:id", () => {
         sub: "1234567890",
         role: Roles.MANAGER,
       });
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
       const userId = (response.body as IUser).id;
       // Act
       const response1 = await request(app)
@@ -76,13 +89,16 @@ describe("PUT /users/:id", () => {
         sub: "1234567890",
         role: Roles.ADMIN,
       });
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
       const userId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
         .put(`/users/${userId}`)
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, firstName: "Rajesh", address: "Pune, India" });
+        .send({ ...managerData, firstName: "Rajesh", address: "Pune, India", tenantId: tenant.id });
       // Assert
       expect(response1.statusCode).toBe(200);
       stopJwks();

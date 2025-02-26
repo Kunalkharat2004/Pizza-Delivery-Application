@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { DataSource } from "typeorm";
+import { DataSource, Repository } from "typeorm";
+import { Tenant } from "../../entity/Tenant";
 
 export const truncateTable = async (connection: DataSource) => {
   const entities = connection.entityMetadatas;
@@ -24,4 +25,11 @@ export const isJWT = (token: string | null): boolean => {
   } catch (err) {
     return false;
   }
+};
+
+export const createTenant = async (repository: Repository<Tenant>) => {
+  return await repository.save({
+    name: "Test Tenant",
+    address: "Test Address",
+  });
 };

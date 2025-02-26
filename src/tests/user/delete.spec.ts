@@ -5,6 +5,8 @@ import { AppDataSource } from "../../config/data-source";
 import { IUser } from "../../types";
 import { createJWKSMock, JWKSMock } from "mock-jwks";
 import { Roles } from "../../constants";
+import { Tenant } from "../../entity/Tenant";
+import { createTenant } from "../utils";
 
 describe("DELETE /users/:id", () => {
   let connection: DataSource;
@@ -12,12 +14,16 @@ describe("DELETE /users/:id", () => {
   let adminToken: string;
   let managerToken: string;
   let stopJwks: () => void;
+  let tenant: Tenant;
+
   const managerData = {
     firstName: "Shraddha",
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
     address: "Bangalore, India",
+    role: Roles.MANAGER,
+    tenantId: null,
   };
 
   beforeAll(async () => {
@@ -25,6 +31,7 @@ describe("DELETE /users/:id", () => {
   });
 
   beforeEach(async () => {
+    tenant = await createTenant(connection.getRepository(Tenant));
     await connection.dropDatabase();
     await connection.synchronize();
   });
@@ -43,7 +50,10 @@ describe("DELETE /users/:id", () => {
         sub: "1234567890",
         role: Roles.ADMIN,
       });
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
       const userId = (response.body as IUser).id;
 
       // Act
@@ -63,7 +73,10 @@ describe("DELETE /users/:id", () => {
         sub: "1234567890",
         role: Roles.ADMIN,
       });
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
       const userId = (response.body as IUser).id;
       // Act
       const response1 = await request(app)
@@ -83,7 +96,10 @@ describe("DELETE /users/:id", () => {
         role: Roles.ADMIN,
       });
 
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
       const userId = (response.body as IUser).id;
       // Act
       const response1 = await request(app).delete(`/users/${userId}`).set("Cookie", `accessToken=${adminToken}`).send();

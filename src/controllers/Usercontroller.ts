@@ -2,7 +2,6 @@ import { Response, NextFunction } from "express";
 import { RegisterRequest } from "../types";
 import { Logger } from "winston";
 import { UserService } from "../services/UserService";
-import { Roles } from "../constants";
 import { User } from "../entity/User";
 import { Repository } from "typeorm";
 
@@ -14,13 +13,14 @@ export class UserController {
   ) {}
   async create(req: RegisterRequest, res: Response, next: NextFunction) {
     try {
-      const { firstName, lastName, email, password, address } = req.body;
+      const { firstName, lastName, email, password, address, role, tenantId } = req.body;
 
       this.logger.debug(`Userdata:}`, {
         firstName,
         lastName,
         email,
         password: "********",
+        role,
         address: "********",
       });
 
@@ -30,7 +30,8 @@ export class UserController {
         email,
         password,
         address,
-        role: Roles.MANAGER,
+        tenantId,
+        role,
       });
       this.logger.info(`User created successfully with id: ${user.id}`);
 

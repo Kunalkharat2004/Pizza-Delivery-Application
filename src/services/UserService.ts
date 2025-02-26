@@ -7,8 +7,11 @@ import bcrypt from "bcrypt";
 export class UserService {
   constructor(private userRepository: Repository<User>) {}
 
-  async createUser({ firstName, lastName, email, password, address, role }: IUser): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { email: email } });
+  async createUser({ firstName, lastName, email, password, address, role, tenantId }: IUser): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { email: email },
+      select: ["id", "firstName", "lastName", "email", "password", "address", "role"],
+    });
 
     if (user) {
       const error = createHttpError(400, "User with this email already exists");
@@ -28,6 +31,7 @@ export class UserService {
         password: hashedPassword,
         address,
         role,
+        tenantId: tenantId ? { id: tenantId } : null,
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -42,7 +46,10 @@ export class UserService {
   }
 
   async checkUserByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { email: email } });
+    const user = await this.userRepository.findOne({
+      where: { email: email },
+      select: ["id", "firstName", "lastName", "email", "password", "address", "role"],
+    });
 
     if (!user) {
       const error = createHttpError(401, "Invalid email or password");
@@ -57,7 +64,10 @@ export class UserService {
   }
 
   async getUserById(id: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: ["id", "firstName", "lastName", "email", "address", "role"],
+    });
 
     if (!user) {
       const error = createHttpError(404, "User not found");

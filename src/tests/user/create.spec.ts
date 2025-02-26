@@ -6,19 +6,25 @@ import { Roles } from "../../constants";
 import { createJWKSMock, JWKSMock } from "mock-jwks";
 import { User } from "../../entity/User";
 import { AuthResponse } from "../../types";
+import { createTenant } from "../utils";
+import { Tenant } from "../../entity/Tenant";
 
 describe("POST /users", () => {
   let connection: DataSource;
+
   const managerData = {
     firstName: "Shraddha",
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
     address: "Bangalore, India",
+    tenantId: null,
+    role: Roles.MANAGER,
   };
 
   let jwksMock: JWKSMock;
   let stopJwks: () => void;
+  let tenant: Tenant;
 
   beforeAll(async () => {
     jwksMock = createJWKSMock("http://localhost:3200");
@@ -28,6 +34,7 @@ describe("POST /users", () => {
 
   beforeEach(async () => {
     stopJwks = jwksMock.start();
+    tenant = await createTenant(connection.getRepository(Tenant));
     await connection.dropDatabase();
     await connection.synchronize();
   });
@@ -48,7 +55,10 @@ describe("POST /users", () => {
       });
 
       // Act
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
 
       // Assert
       expect(response.status).toBe(201);
@@ -58,9 +68,14 @@ describe("POST /users", () => {
         sub: "123",
         role: Roles.ADMIN,
       });
+      const tenant = await createTenant(connection.getRepository(Tenant));
 
       // Act
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${adminToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
+
       const userRepository = connection.getRepository(User);
       const users = await userRepository.find({});
       // Assert
@@ -71,7 +86,9 @@ describe("POST /users", () => {
     });
     it("it should return 401 status code if admin is not authenticate", async () => {
       // Act
-      const response = await request(app).post("/users").send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .send({ ...managerData, tenantId: tenant.id });
 
       // Assert
       const userRepository = connection.getRepository(User);
@@ -87,7 +104,10 @@ describe("POST /users", () => {
         role: Roles.MANAGER,
       });
       // Act
-      const response = await request(app).post("/users").set("Cookie", `accessToken=${managerToken}`).send(managerData);
+      const response = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${managerToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
 
       // Assert
       const userRepository = connection.getRepository(User);
@@ -108,7 +128,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, email: "" });
+        .send({ ...managerData, email: "", tenantId: tenant.id });
 
       // Assert
       const users = await connection.getRepository(User).find();
@@ -132,7 +152,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, password: "" });
+        .send({ ...managerData, password: "", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -155,7 +175,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, firstName: "" });
+        .send({ ...managerData, firstName: "", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -178,7 +198,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, lastName: "" });
+        .send({ ...managerData, lastName: "", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -201,7 +221,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, address: "" });
+        .send({ ...managerData, address: "", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -226,7 +246,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, email: "shraddha" });
+        .send({ ...managerData, email: "shraddha", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -239,7 +259,7 @@ describe("POST /users", () => {
         expect(error.msg).toBeDefined();
       });
     });
-    it("should return 400 if password lenght is less than 8 characters", async () => {
+    it("should return 400 if password length is less than 8 characters", async () => {
       const adminToken = jwksMock.token({
         sub: "123",
         role: Roles.ADMIN,
@@ -249,7 +269,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, password: "secret" });
+        .send({ ...managerData, password: "secret", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -272,7 +292,7 @@ describe("POST /users", () => {
       const response = await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, password: "shraddhapawar" });
+        .send({ ...managerData, password: "shraddhapawar", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert

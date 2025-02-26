@@ -16,7 +16,7 @@ describe("GET /auth/refresh", () => {
     firstName: "Kunal",
     lastName: "Kharat",
     email: "kunalkharat@gmail.com",
-    password: "secret@123",
+    password: "Secret@123",
     address: "Pune, India",
   };
 

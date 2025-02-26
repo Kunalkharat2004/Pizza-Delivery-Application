@@ -57,9 +57,9 @@ const validateUserCredentials = checkSchema({
         if (!/[@$!%*?&#]/.test(value)) {
           errors.push("Password must contain at least one special character");
         }
-        // if (errors.length > 0) {
-        //   throw new Error(errors.join('. '));
-        // }
+        if (errors.length > 0) {
+          throw new Error(errors.join(". "));
+        }
         return true;
       },
     },

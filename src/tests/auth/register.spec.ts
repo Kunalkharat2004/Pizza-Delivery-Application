@@ -10,6 +10,13 @@ import { RefreshToken } from "../../entity/RefreshToken";
 
 describe("POST /users/register", () => {
   let connection: DataSource;
+  const user = {
+    firstName: "John",
+    lastName: "Doe",
+    email: "johndoe@gmail.com",
+    password: "Secret@123",
+    address: "Sans Francisco",
+  };
 
   beforeAll(async () => {
     connection = await AppDataSource.initialize();
@@ -26,39 +33,16 @@ describe("POST /users/register", () => {
 
   describe("Given all the fileds", () => {
     it("should return 201", async () => {
-      const user = {
-        firstName: "John",
-        lastName: "Doe",
-        email: "johndoe@gmail.com",
-        password: "secret@123",
-        address: "Sans Francisco",
-      };
       const response = await request(app).post("/auth/register").send(user);
       expect(response.status).toBe(201);
     });
 
     it("should return a json response", async () => {
-      const user = {
-        firstName: "John",
-        lastName: "Doe",
-        email: "johndoe@gmail.com",
-        password: "secret@123",
-        address: "Sans Francisco",
-      };
       const response = await request(app).post("/auth/register").send(user);
       expect(response.header["content-type"]).toBe("application/json; charset=utf-8");
     });
 
     it("should persist the user in the database", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
       await request(app).post("/auth/register").send(user);
 
@@ -73,15 +57,6 @@ describe("POST /users/register", () => {
     });
 
     it("should return the id of the user", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
       const response = await request(app).post("/auth/register").send(user);
       const responseBody = response.body as AuthResponse;
@@ -90,15 +65,6 @@ describe("POST /users/register", () => {
     });
 
     it("should check the role of user is customer", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
       await request(app).post("/auth/register").send(user);
       const userRepo = connection.getRepository(User);
@@ -108,15 +74,6 @@ describe("POST /users/register", () => {
     });
 
     it("should store the hashed password in db", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
       await request(app).post("/auth/register").send(user);
 
@@ -129,15 +86,6 @@ describe("POST /users/register", () => {
     });
 
     it("should return 400 statusCode if email is already registered", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
       const userRepo = connection.getRepository(User);
       await userRepo.save({ ...user, role: Roles.CUSTOMER });
@@ -151,15 +99,6 @@ describe("POST /users/register", () => {
     });
 
     it("should extract the accessToken and refreshToken from the cookie", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       let accessToken: string | null = null;
       let refreshToken: string | null = null;
 
@@ -185,15 +124,6 @@ describe("POST /users/register", () => {
     });
 
     it("should persist refreshToken in the database", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
       const response = await request(app).post("/auth/register").send(user);
 
@@ -210,17 +140,10 @@ describe("POST /users/register", () => {
 
   describe("Not given all the fields", () => {
     it("should return 400 statusCode if email is missing", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, email: "" });
 
       // Assert
       const users = await connection.getRepository(User).find();
@@ -235,17 +158,10 @@ describe("POST /users/register", () => {
     });
 
     it("should return 400 statusCode if password is missing", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat2004@gmail.com",
-        password: "",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, password: "" });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -255,17 +171,10 @@ describe("POST /users/register", () => {
     });
 
     it("should return 400 statusCode if firstName is missing", async () => {
-      // Arrange
-      const user = {
-        firstName: "",
-        lastName: "Kharat",
-        email: "kunalkharat2004@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, firstName: "" });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -275,17 +184,10 @@ describe("POST /users/register", () => {
       expect(users).toHaveLength(0);
     });
     it("should return 400 statusCode if lastName is missing", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "",
-        email: "kunalkharat2004@gmail.com",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, lastName: "" });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -294,17 +196,10 @@ describe("POST /users/register", () => {
       expect(users).toHaveLength(0);
     });
     it("should return 400 statusCode if address is missing", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat2004@gmail.com",
-        password: "secret@123",
-        address: "",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, address: "" });
 
       const users = await connection.getRepository(User).find();
       // Assert
@@ -316,17 +211,10 @@ describe("POST /users/register", () => {
 
   describe("Fields not in proper format", () => {
     it("should return 400 statusCode if email is not in proper format", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat",
-        password: "secret@123",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, email: "johndoegmail.com" });
       const users = await connection.getRepository(User).find();
       // Assert
       expect(response.statusCode).toBe(400);
@@ -339,34 +227,20 @@ describe("POST /users/register", () => {
       });
     });
     it("should return 400 if password lenght is less than 8 characters", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat",
-        password: "secret",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, password: "Sec@123" });
       const users = await connection.getRepository(User).find();
       // Assert
       expect(response.statusCode).toBe(400);
       expect(users).toHaveLength(0);
     });
     it("should return 400 if password doesn't contain atleast 1 uppercase character,1 lower case character, 1 special character and 1 number", async () => {
-      // Arrange
-      const user = {
-        firstName: "Kunal",
-        lastName: "Kharat",
-        email: "kunalkharat",
-        password: "secret",
-        address: "Pune, India",
-      };
-
       // Act
-      const response = await request(app).post("/auth/register").send(user);
+      const response = await request(app)
+        .post("/auth/register")
+        .send({ ...user, password: "secret@123" });
       const users = await connection.getRepository(User).find();
       // Assert
       expect(response.statusCode).toBe(400);

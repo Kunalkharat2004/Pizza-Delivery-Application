@@ -52,7 +52,7 @@ describe("GET /tenant/:id", () => {
 
       const tenantId = (response.body as ITenant).id;
       // Act
-      const response1 = await request(app).get(`/tenant/${tenantId}`);
+      const response1 = await request(app).get(`/tenant/${tenantId}`).set("Cookie", `accessToken=${adminToken}`);
       // Assert
       expect(response1.statusCode).toBe(200);
       stopJwks();
@@ -74,7 +74,7 @@ describe("GET /tenant/:id", () => {
       await request(app).delete(`/tenant/${tenantId}`).set("Cookie", `accessToken=${adminToken}`);
 
       // Act
-      const response2 = await request(app).get(`/tenant/${tenantId}`);
+      const response2 = await request(app).get(`/tenant/${tenantId}`).set("Cookie", `accessToken=${adminToken}`);
       // Assert
       expect(response2.statusCode).toBe(404);
       stopJwks();

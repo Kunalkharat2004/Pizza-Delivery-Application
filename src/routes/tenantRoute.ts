@@ -30,7 +30,9 @@ router.post(
 router.get("/", (req: Request, res: Response, next: NextFunction) => tenantController.listTenant(req, res, next));
 
 // GET tenant by id
-router.get("/:id", (req: Request, res: Response, next: NextFunction) => tenantController.getTenantById(req, res, next));
+router.get("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: Response, next: NextFunction) =>
+  tenantController.getTenantById(req, res, next)
+);
 
 // PUT tenant by id
 router.put(

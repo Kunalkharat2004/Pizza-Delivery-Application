@@ -4,6 +4,7 @@
    "description": "Pizza delivery Application ",
    "main": "index.js",
    "scripts": {
+      "build":"tsc", 
       "dev": "cross-env NODE_ENV=dev nodemon --legacy-watch src/server.ts",
       "format:fix": "prettier . --write",
       "format:check": "prettier . --check",

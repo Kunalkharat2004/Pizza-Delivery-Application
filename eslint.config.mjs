@@ -7,7 +7,14 @@ export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
   {
-    ignores: ["dist", "node_modules", "eslint.config.mjs", "jest.config.js"],
+    ignores: [
+      "dist",
+      "node_modules",
+      "eslint.config.mjs",
+      "jest.config.js",      
+      "*.spec.ts",
+      "src/tests",
+    ],
   },
   {
     languageOptions: {
@@ -15,7 +22,7 @@ export default tseslint.config(
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
-      sourceType: "module", 
+      sourceType: "module",
     },
   },
   {

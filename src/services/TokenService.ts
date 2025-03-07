@@ -1,15 +1,18 @@
 import { JwtPayload } from "jsonwebtoken";
-import fs from "fs";
 import jwt from "jsonwebtoken";
-import path from "path";
 import { RefreshToken } from "../entity/RefreshToken";
 import { User } from "../entity/User";
 import config from "../config/config";
 import { Repository } from "typeorm";
+import createHttpError from "http-errors";
 
 export default class TokenService {
   generateAccessToken(payload: JwtPayload) {
-    const privateKey: Buffer = fs.readFileSync(path.join(__dirname, "../../certs/private.pem"));
+    const privateKey: string | undefined = config.PRIVATE_KEY;
+    if (privateKey === undefined) {
+      const error = createHttpError(500, "Private key not found");
+      throw error;
+    }
 
     const accessToken = jwt.sign(payload, privateKey, {
       algorithm: "RS256",

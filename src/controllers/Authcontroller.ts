@@ -11,10 +11,10 @@ import createHttpError from "http-errors";
 
 export class AuthController {
   constructor(
-    private userService: UserService,
-    private logger: Logger,
-    private tokenService: TokenService,
-    private refreshTokenRepository: Repository<RefreshToken>
+    private readonly userService: UserService,
+    private readonly logger: Logger,
+    private readonly tokenService: TokenService,
+    private readonly refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
   setCookies(res: Response, accessToken: string, refreshToken: string) {

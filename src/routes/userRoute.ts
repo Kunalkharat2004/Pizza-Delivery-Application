@@ -1,5 +1,4 @@
-import { NextFunction, Router } from "express";
-import { Request, Response } from "express";
+import { Request, Response, NextFunction, Router } from "express";
 import { AppDataSource } from "../config/data-source";
 import authenticate from "../middlewares/authenticate";
 import { Roles } from "../constants";

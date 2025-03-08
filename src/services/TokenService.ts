@@ -1,5 +1,4 @@
-import { JwtPayload } from "jsonwebtoken";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { RefreshToken } from "../entity/RefreshToken";
 import { User } from "../entity/User";
 import config from "../config/config";
@@ -40,8 +39,6 @@ export default class TokenService {
       issuer: "auth-service",
       jwtid: String(refreshTokenRefrence.id),
     });
-    // console.log(refreshTokenRefrence.id);
-    // console.log(refreshToken);
 
     return refreshToken;
   }

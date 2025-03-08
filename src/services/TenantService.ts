@@ -5,8 +5,6 @@ import createHttpError from "http-errors";
 import { ITenant } from "../types";
 
 export class TenantService {
-  constructor() {}
-
   async createTenant({ name, address }: ITenant, tenantRepository: Repository<Tenant>): Promise<Tenant> {
     try {
       const tenant = tenantRepository.create({ name, address });

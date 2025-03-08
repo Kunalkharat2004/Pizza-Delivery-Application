@@ -118,6 +118,6 @@
   "src/tests/**/*",
   "eslint.config.mjs",
   "jest.config.js",
-  "coverage",
+  "src/coverage/**/*",
 ]
 }

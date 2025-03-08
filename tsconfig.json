@@ -112,5 +112,12 @@
       "experimentalDecorators": true
   },
   // "include": ["src/**/*","scripts/**/*.mjs","test/**/*.ts"],
-  "exclude": ["node_modules","**/*.spec.ts","src/tests/**/*, eslint.config.mjs,jest.config.mjs"]
+"exclude": [
+  "node_modules",
+  "**/*.spec.ts",
+  "src/tests/**/*",
+  "eslint.config.mjs",
+  "jest.config.js",
+  "coverage",
+]
 }

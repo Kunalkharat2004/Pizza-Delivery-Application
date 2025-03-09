@@ -27,10 +27,7 @@ export default tseslint.config(
   },
   {
     rules: {
-      "no-unused-vars": "off",
       "no-console": "error",
-      "@typescript-eslint/no-misused-promises": "off",
-      "@typescript-eslint/no-floating-promises": "off",
     },
   }
 );

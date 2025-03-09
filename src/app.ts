@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import tenantRoute from "./routes/tenantRoute";
 import userRoute from "./routes/userRoute";
 
-const app = express(); // Removed explicit type annotation
+const app = express();
 
 app.use(express.static("public"));
 app.use(express.json());

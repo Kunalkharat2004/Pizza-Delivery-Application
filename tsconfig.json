@@ -111,7 +111,6 @@
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true
   },
-  // "include": ["src/**/*","scripts/**/*.mjs","test/**/*.ts"],
 "exclude": [
   "node_modules",
   "**/*.spec.ts",

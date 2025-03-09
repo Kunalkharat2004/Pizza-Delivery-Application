@@ -18,4 +18,7 @@ const main = async () => {
     process.exit(1);
   }
 };
-main();
+main().catch((err) => {
+  logger.error(err);
+  process.exit(1);
+});

@@ -5,7 +5,7 @@ import createHttpError from "http-errors";
 import bcrypt from "bcrypt";
 
 export class UserService {
-  constructor(private userRepository: Repository<User>) {}
+  constructor(private readonly userRepository: Repository<User>) {}
 
   async createUser({ firstName, lastName, email, password, address, role, tenantId }: IUser): Promise<User> {
     const user = await this.userRepository.findOne({

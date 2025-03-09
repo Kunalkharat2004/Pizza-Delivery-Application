@@ -8,9 +8,9 @@ import createHttpError from "http-errors";
 
 export class TenantController {
   constructor(
-    private tenantService: TenantService,
-    private tenantRepository: Repository<Tenant>,
-    private logger: Logger
+    private readonly tenantService: TenantService,
+    private readonly tenantRepository: Repository<Tenant>,
+    private readonly logger: Logger
   ) {}
   async create(req: Request, res: Response, next: NextFunction) {
     try {
@@ -82,10 +82,6 @@ export class TenantController {
       const tenantId = req.params.id;
       const tenant = await this.tenantRepository.findOneBy({ id: tenantId });
       if (!tenant) {
-        const error = createHttpError(404, "Tenant not found");
-        next(error);
-        return;
-      } else if (!tenant.id) {
         const error = createHttpError(404, "Tenant not found");
         next(error);
         return;

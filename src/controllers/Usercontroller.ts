@@ -7,9 +7,9 @@ import { Repository } from "typeorm";
 
 export class UserController {
   constructor(
-    private logger: Logger,
-    private userService: UserService,
-    private userRepository: Repository<User>
+    private readonly logger: Logger,
+    private readonly userService: UserService,
+    private readonly userRepository: Repository<User>
   ) {}
   async create(req: RegisterRequest, res: Response, next: NextFunction) {
     try {

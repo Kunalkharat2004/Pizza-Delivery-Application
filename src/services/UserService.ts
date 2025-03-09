@@ -2,7 +2,7 @@ import { Repository } from "typeorm";
 import { User } from "../entity/User";
 import { IUser } from "../types";
 import createHttpError from "http-errors";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export class UserService {
   constructor(private readonly userRepository: Repository<User>) {}
@@ -19,7 +19,7 @@ export class UserService {
     }
 
     try {
-      // Hash the password using bcrypt
+      // Hash the password using bcryptjs
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
 

@@ -5,8 +5,17 @@ import globalErrorHandler from "./middlewares/globalErrorHandler";
 import cookieParser from "cookie-parser";
 import tenantRoute from "./routes/tenantRoute";
 import userRoute from "./routes/userRoute";
+import cors from "cors";
+import config from "./config/config";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: [config.CLIENT_URL as string],
+    credentials: true,
+  })
+);
 
 app.use(express.static("public"));
 app.use(express.json());

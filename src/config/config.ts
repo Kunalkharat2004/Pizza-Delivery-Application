@@ -13,6 +13,7 @@ const {
   REFRESH_TOKEN_SECRET,
   JWKS_URI,
   PRIVATE_KEY,
+  CLIENT_URL,
 } = process.env;
 
 const _config = {
@@ -26,6 +27,7 @@ const _config = {
   REFRESH_TOKEN_SECRET,
   JWKS_URI,
   PRIVATE_KEY,
+  CLIENT_URL,
 };
 
 const config = Object.freeze(_config);

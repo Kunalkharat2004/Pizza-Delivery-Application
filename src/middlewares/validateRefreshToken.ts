@@ -24,8 +24,6 @@ export const validate_And_Check_IsRevoked_RefreshToken = expressjwt({
       });
 
       return refreshToken === null;
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       logger.error("Error while getting refresh token", {
         id: (token?.payload as IRefreshtoken).jti,

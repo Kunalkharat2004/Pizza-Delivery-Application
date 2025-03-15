@@ -8,6 +8,8 @@ import createHttpError from "http-errors";
 export default class TokenService {
   generateAccessToken(payload: JwtPayload) {
     const privateKey: string | undefined = config.PRIVATE_KEY;
+    // console.log("privateKey", privateKey);
+
     if (privateKey === undefined) {
       const error = createHttpError(500, "Private key not found");
       throw error;

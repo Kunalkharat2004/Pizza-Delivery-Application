@@ -4,7 +4,6 @@ import config from "../config/config";
 import { NextFunction, Request, Response } from "express";
 import path from "path";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const globalErrorHandler = (err: HttpError, req: Request, res: Response, next: NextFunction) => {
   const statusCode = err.statusCode || err.status || 500;
   logger.error(err.message);

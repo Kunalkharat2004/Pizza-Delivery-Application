@@ -33,10 +33,10 @@ describe("POST /users", () => {
   });
 
   beforeEach(async () => {
-    stopJwks = jwksMock.start();
-    tenant = await createTenant(connection.getRepository(Tenant));
     await connection.dropDatabase();
     await connection.synchronize();
+    stopJwks = jwksMock.start();
+    tenant = await createTenant(connection.getRepository(Tenant));
   });
 
   afterEach(() => {

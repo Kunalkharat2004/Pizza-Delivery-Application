@@ -30,9 +30,9 @@ describe("PUT /users/:id", () => {
   });
 
   beforeEach(async () => {
-    tenant = await createTenant(connection.getRepository(Tenant));
     await connection.dropDatabase();
     await connection.synchronize();
+    tenant = await createTenant(connection.getRepository(Tenant));
   });
 
   afterAll(async () => {

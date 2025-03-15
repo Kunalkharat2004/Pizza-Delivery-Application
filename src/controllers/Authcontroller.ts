@@ -41,8 +41,6 @@ export class AuthController {
       firstName,
       lastName,
       email,
-      password: "********",
-      address: "********",
     });
 
     try {
@@ -123,7 +121,7 @@ export class AuthController {
   async self(req: AuthRequest, res: Response) {
     const data = await this.userService.getUserById(req.auth.sub);
 
-    res.json({ ...data, password: "********" });
+    res.json({ ...data });
   }
 
   async refresh(req: AuthRequest, res: Response) {

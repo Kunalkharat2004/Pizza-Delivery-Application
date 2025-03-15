@@ -4,6 +4,8 @@ import { Logger } from "winston";
 import { UserService } from "../services/UserService";
 import { User } from "../entity/User";
 import { Repository } from "typeorm";
+import createHttpError from "http-errors";
+import { Roles } from "../constants";
 
 export class UserController {
   constructor(
@@ -13,14 +15,14 @@ export class UserController {
   ) {}
   async create(req: RegisterRequest, res: Response, next: NextFunction) {
     try {
-      const { firstName, lastName, email, password, address, role, tenantId } = req.body;
+      const { firstName, lastName, email, password, address, tenantId } = req.body;
 
       this.logger.debug(`Userdata:}`, {
         firstName,
         lastName,
         email,
         password: "********",
-        role,
+        role: Roles.MANAGER,
         address: "********",
       });
 
@@ -31,7 +33,7 @@ export class UserController {
         password,
         address,
         tenantId,
-        role,
+        role: Roles.MANAGER,
       });
       this.logger.info(`User created successfully with id: ${user.id}`);
 
@@ -69,17 +71,26 @@ export class UserController {
   async updateUser(req: RegisterRequest, response: Response, next: NextFunction) {
     try {
       const userId = req.params.id;
-      const { firstName, lastName, email, password, address } = req.body;
+
+      const { firstName, lastName, email, address, role, tenantId } = req.body;
 
       const user = await this.userService.getUserById(userId);
-      user.firstName = firstName;
-      user.lastName = lastName;
-      user.email = email;
-      user.password = password;
-      user.address = address;
-
-      await this.userRepository.save(user);
-      response.json(user);
+      if (!user) {
+        const error = createHttpError(404, "User not found");
+        next(error);
+        return;
+      }
+      const updatedUserData = await this.userService.updateUser({
+        id: userId,
+        firstName,
+        lastName,
+        email,
+        address,
+        password: user.password,
+        role,
+        tenantId,
+      });
+      response.json(updatedUserData);
     } catch (err) {
       next(err);
       return;

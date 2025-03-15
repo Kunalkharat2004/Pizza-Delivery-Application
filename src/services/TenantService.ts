@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Repository } from "typeorm";
 import { Tenant } from "../entity/Tenant";
 import createHttpError from "http-errors";

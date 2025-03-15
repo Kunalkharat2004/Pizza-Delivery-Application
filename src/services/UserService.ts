@@ -31,10 +31,8 @@ export class UserService {
         password: hashedPassword,
         address,
         role,
-        tenantId: tenantId ? { id: tenantId } : null,
+        tenant: tenantId ? { id: tenantId } : undefined,
       });
-
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       const error = createHttpError(500, "Failed to register user");
       throw error;
@@ -75,5 +73,21 @@ export class UserService {
     }
 
     return user;
+  }
+
+  async updateUser({ id, firstName, lastName, email, password, address, role, tenantId }: IUser) {
+    try {
+      return await this.userRepository.update(id as string, {
+        firstName,
+        lastName,
+        email,
+        address,
+        role,
+        tenant: tenantId ? { id: tenantId } : undefined,
+      });
+    } catch (err) {
+      const error = createHttpError(500, "Failed to update user");
+      throw error;
+    }
   }
 }

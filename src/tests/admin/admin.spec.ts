@@ -23,13 +23,25 @@ describe("Admin Creation", () => {
 
   describe("createAdminUser", () => {
    it("should create an admin user if one does not exist", async () => {
-      await createAdminUser();
+        await createAdminUser();
 
         const userRepo = connection.getRepository(User);
         const admin = await userRepo.find({ where: { role: Roles.ADMIN } });
         expect(admin).toHaveLength(1);
         expect(admin[0].email).toBe(config.ADMIN_EMAIL);
    });
+   it("should hash the admin password securely", async () => {
+    await createAdminUser();
+
+    const userRepo = connection.getRepository(User);
+    const admin = await userRepo.find({ where: { role: Roles.ADMIN },
+    select:["address","email","password","firstName","lastName"] });
+    expect(admin).toHaveLength(1);
+
+    expect(admin[0].password).not.toBe("SecureAdminPassword123!");
+    expect(admin[0].password.startsWith("$2")).toBe(true);
+    });
+
     it("should skip creation if an admin user already exists", async () => {
         const userRepo = connection.getRepository(User);
         const adminUser = userRepo.create({
@@ -41,8 +53,22 @@ describe("Admin Creation", () => {
             role: Roles.ADMIN,
     });
     await userRepo.save(adminUser);
-    const admin = await userRepo.find({ where: { role: Roles.ADMIN } });
+    const admin = await userRepo.find({ where: { role: Roles.ADMIN }
+    });
+    console.log("Admin: ",admin);
+    
     expect(admin).toHaveLength(1);
 });
+
+it("should log an error if an error occurs", async () => {
+    const logger = require("../../config/logger").default;
+    const spy = jest.spyOn(logger, "error");
+    jest.spyOn(connection, "getRepository").mockImplementation(() => {
+        throw new Error("Error creating admin user");
+    });
+    await createAdminUser();
+    expect(spy).toHaveBeenCalled();
+}
+);
   });
 });

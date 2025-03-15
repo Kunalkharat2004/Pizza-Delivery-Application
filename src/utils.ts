@@ -18,11 +18,11 @@ export async function createAdminUser() {
     }
 
     // Retrieve credentials from environment variables or set defaults
-    const adminEmail = config.ADMIN_EMAIL || "admin@gmail.com";
-    const adminPassword = config.ADMIN_PASSWORD || "SecureAdminPassword123!";
-    const adminFirstName = config.ADMIN_FIRSTNAME || "Admin";
-    const adminLastName = config.ADMIN_LASTNAME || "User";
-    const adminAddress = config.ADMIN_ADDRESS || "Default Admin Address";
+    const adminEmail = config.ADMIN_EMAIL ?? "admin@gmail.com";
+    const adminPassword = config.ADMIN_PASSWORD ?? "SecureAdminPassword123!";
+    const adminFirstName = config.ADMIN_FIRSTNAME ?? "Admin";
+    const adminLastName = config.ADMIN_LASTNAME ?? "User";
+    const adminAddress = config.ADMIN_ADDRESS ?? "Default Admin Address";
 
     // Hash the admin password securely
     const hashedPassword = await bcrypt.hash(adminPassword, 10);

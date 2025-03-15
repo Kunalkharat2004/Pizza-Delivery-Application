@@ -76,7 +76,7 @@ describe("PUT /users/:id", () => {
       const response1 = await request(app)
         .put(`/users/${userId}`)
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, firstName: "Rajesh", address: "Pune, India" });
+        .send({ ...managerData });
       // Assert
       expect(response1.statusCode).toBe(403);
       stopJwks();

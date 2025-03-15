@@ -72,7 +72,7 @@ describe("GET /auth/self", () => {
       // Assert
 
       expect((response.body as Record<string, string>).id).toBe(data.id);
-      expect((response.body as Record<string, string>).password).toBe("********");
+      expect((response.body as Record<string, string>).password).not.toBeDefined();
     });
 
     it("it should return 401 status code if accessToken not found in cookie", async () => {

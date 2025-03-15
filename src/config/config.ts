@@ -14,11 +14,6 @@ const {
   JWKS_URI,
   PRIVATE_KEY,
   CLIENT_URL,
-  ADMIN_EMAIL,
-  ADMIN_PASSWORD,
-  ADMIN_ADDRESS,
-  ADMIN_FIRSTNAME,
-  ADMIN_LASTNAME,
 } = process.env;
 
 const _config = {
@@ -33,11 +28,6 @@ const _config = {
   JWKS_URI,
   PRIVATE_KEY,
   CLIENT_URL,
-  ADMIN_EMAIL,
-  ADMIN_PASSWORD,
-  ADMIN_ADDRESS,
-  ADMIN_FIRSTNAME,
-  ADMIN_LASTNAME,
 };
 
 const config = Object.freeze(_config);

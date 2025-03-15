@@ -16,7 +16,6 @@ export async function createAdminUser() {
       logger.info("Admin user already exists. Skipping creation.");
       return;
     }
-
     // Retrieve credentials from environment variables or set defaults
     const adminEmail = config.ADMIN_EMAIL ?? "admin@gmail.com";
     const adminPassword = config.ADMIN_PASSWORD ?? "SecureAdminPassword123!";

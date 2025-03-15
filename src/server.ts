@@ -2,6 +2,7 @@ import app from "./app";
 import config from "./config/config";
 import { AppDataSource } from "./config/data-source";
 import logger from "./config/logger";
+import { createAdminUser } from "./utils";
 
 const main = async () => {
   try {
@@ -10,6 +11,7 @@ const main = async () => {
     await AppDataSource.initialize();
     logger.info("Database connected successfully");
 
+    await createAdminUser();
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
     });

@@ -5,7 +5,6 @@ import { UserService } from "../services/UserService";
 import { User } from "../entity/User";
 import { Repository } from "typeorm";
 import createHttpError from "http-errors";
-import { Roles } from "../constants";
 import { matchedData } from "express-validator";
 
 export class UserController {

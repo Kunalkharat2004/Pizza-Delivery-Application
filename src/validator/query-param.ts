@@ -29,7 +29,7 @@ const queryParam = checkSchema(
     role: {
       customSanitizer: {
         options: (value: string) => {
-          return value ? value : "";
+          return value ?? "";
         },
       },
     },

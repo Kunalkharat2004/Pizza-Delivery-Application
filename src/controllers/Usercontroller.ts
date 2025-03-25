@@ -1,11 +1,12 @@
 import { Response, NextFunction } from "express";
-import { RegisterRequest } from "../types";
+import { IUser, RegisterRequest, UserQueryParams } from "../types";
 import { Logger } from "winston";
 import { UserService } from "../services/UserService";
 import { User } from "../entity/User";
 import { Repository } from "typeorm";
 import createHttpError from "http-errors";
 import { Roles } from "../constants";
+import { matchedData } from "express-validator";
 
 export class UserController {
   constructor(
@@ -15,7 +16,7 @@ export class UserController {
   ) {}
   async create(req: RegisterRequest, res: Response, next: NextFunction) {
     try {
-      const { firstName, lastName, email, password, address, tenantId } = req.body;
+      const { firstName, lastName, email, password, address, tenantId, role }: IUser = req.body;
 
       this.logger.debug(`Userdata:}`, {
         firstName,
@@ -33,7 +34,7 @@ export class UserController {
         password,
         address,
         tenantId,
-        role: Roles.MANAGER,
+        role,
       });
       this.logger.info(`User created successfully with id: ${user.id}`);
 
@@ -49,8 +50,14 @@ export class UserController {
 
   async listUsers(req: RegisterRequest, res: Response, next: NextFunction) {
     try {
-      const users = await this.userService.listUsers();
-      res.json(users);
+      const validateQuery = matchedData(req, { onlyValidData: true });
+      const [users, count] = await this.userService.listUsers(validateQuery as UserQueryParams);
+      res.json({
+        data: users,
+        total: count,
+        currentPage: validateQuery.currentPage as number,
+        perPage: validateQuery.perPage as number,
+      });
     } catch (err) {
       next(err);
       return;

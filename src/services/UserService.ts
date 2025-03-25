@@ -1,6 +1,6 @@
-import { Repository } from "typeorm";
+import { Brackets, Repository } from "typeorm";
 import { User } from "../entity/User";
-import { IUser } from "../types";
+import { IUser, UserQueryParams } from "../types";
 import createHttpError from "http-errors";
 import bcrypt from "bcryptjs";
 
@@ -39,8 +39,27 @@ export class UserService {
     }
   }
 
-  async listUsers(): Promise<User[]> {
-    return await this.userRepository.find();
+  async listUsers(validateQuery: UserQueryParams) {
+    const queryBuilder = this.userRepository.createQueryBuilder("user");
+    const searchQuery = `%${validateQuery.q}%`;
+
+    if (validateQuery.q) {
+      queryBuilder.where(
+        new Brackets((qb) => {
+          qb.where("CONCAT(user.firstName, ' ', user.lastName) ILIKE :searchQuery", { searchQuery }).orWhere(
+            "user.email ILIKE :searchQuery",
+            { searchQuery }
+          );
+        })
+      );
+    }
+    if (validateQuery.role) {
+      queryBuilder.andWhere("user.role = :role", { role: validateQuery.role });
+    }
+    return await queryBuilder
+      .skip((validateQuery.currentPage - 1) * validateQuery.perPage)
+      .take(validateQuery.perPage)
+      .getManyAndCount();
   }
 
   async checkUserByEmail(email: string): Promise<User> {
@@ -65,6 +84,9 @@ export class UserService {
     const user = await this.userRepository.findOne({
       where: { id },
       select: ["id", "firstName", "lastName", "email", "address", "role"],
+      relations: {
+        tenant: true,
+      },
     });
 
     if (!user) {

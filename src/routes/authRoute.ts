@@ -31,7 +31,7 @@ router.post("/login", validateLoginCredentials, validateRequest, (req: Request, 
 
 router.get("/self", authenticate, (req: Request, res: Response) => authController.self(req as AuthRequest, res));
 
-router.get("/refresh", validate_And_Check_IsRevoked_RefreshToken, (req: Request, res: Response) =>
+router.post("/refresh", validate_And_Check_IsRevoked_RefreshToken, (req: Request, res: Response) =>
   authController.refresh(req as AuthRequest, res)
 );
 

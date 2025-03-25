@@ -42,10 +42,18 @@ describe("GET /users", () => {
   describe("List of users", () => {
     it("should return 200 status code", async () => {
       // Act
-      const response = await request(app).get("/users");
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+
+      const response = await request(app).get("/users").set("Cookie", `accessToken=${adminToken}`);
 
       // Assert
-      expect(response.status).toBe(200);
+      expect(response.statusCode).toBe(200);
+      stopJwks();
     });
   });
 

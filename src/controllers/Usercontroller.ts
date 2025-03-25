@@ -23,7 +23,7 @@ export class UserController {
         lastName,
         email,
         password: "********",
-        role: Roles.MANAGER,
+        role,
         address: "********",
       });
 

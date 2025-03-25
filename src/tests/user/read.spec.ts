@@ -40,6 +40,24 @@ describe("GET /users", () => {
   });
 
   describe("List of users", () => {
+
+    it("should return 401 status code if role is not admin", async () => {
+      const response = await request(app).get("/users");
+      expect(response.statusCode).toBe(401);
+    });
+
+    it("should return 403 status code if role is not admin", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.CUSTOMER,
+      });
+      const response = await request(app).get("/users").set("Cookie", `accessToken=${adminToken}`);
+      expect(response.statusCode).toBe(403);
+      stopJwks();
+    });
+
     it("should return 200 status code", async () => {
       // Act
       jwksMock = createJWKSMock("http://localhost:3200");

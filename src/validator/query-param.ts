@@ -1,6 +1,6 @@
 import { checkSchema } from "express-validator";
 
-const paginateParam = checkSchema(
+const queryParam = checkSchema(
   {
     currentPage: {
       customSanitizer: {
@@ -37,4 +37,4 @@ const paginateParam = checkSchema(
   ["query"]
 );
 
-export default paginateParam;
+export default queryParam;

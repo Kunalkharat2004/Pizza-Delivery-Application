@@ -9,7 +9,7 @@ import validateUserCredentials from "../validator/register-validation";
 import logger from "../config/logger";
 import { UserService } from "../services/UserService";
 import { User } from "../entity/User";
-import paginateParam from "../validator/paginate-param";
+import queryParam from "../validator/query-param";
 
 const router = Router();
 const userRepository = AppDataSource.getRepository(User);
@@ -30,7 +30,7 @@ router.get(
   "/",
   authenticate,
   canAccess([Roles.ADMIN]),
-  paginateParam,
+  queryParam,
   validateRequest,
   (req: Request, res: Response, next: NextFunction) => userController.listUsers(req, res, next)
 );

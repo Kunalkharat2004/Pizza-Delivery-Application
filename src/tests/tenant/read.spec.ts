@@ -27,11 +27,42 @@ describe("GET /tenant/:id", () => {
 
   describe("List of tenants", () => {
     it("should return 200 status code", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
       // Act
-      const response = await request(app).get("/tenant");
+      const response = await request(app).get("/tenant").set("Cookie", `accessToken=${adminToken}`);
 
       // Assert
       expect(response.status).toBe(200);
+      expect(response.body.data).toEqual([]);
+      expect(response.body.total).toBe(0);
+      expect(response.body.currentPage).toBe(1);
+      expect(response.body.perPage).toBe(5);
+      stopJwks();
+    });
+
+    it("should return 401 status code if no token is provided", async () => {
+      const response = await request(app).get("/tenant");
+      expect(response.status).toBe(401);
+    });
+    
+    it("should return 400 status code if invalid page number is provided", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+      // Act
+      const response = await request(app).get("/tenant?currentPage=0&perPage=5").set("Cookie", `accessToken=${adminToken}`);
+      // Assert
+      expect(response.status).toBe(200);
+      expect(response.body.currentPage).toBe(1);
+      stopJwks();
     });
   });
 

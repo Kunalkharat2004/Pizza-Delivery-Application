@@ -9,11 +9,12 @@ import { Roles } from "../constants";
 import canAccess from "../middlewares/canAccess";
 import validateRequest from "../middlewares/validate-request";
 import validateTenant from "../validator/tenant-validator";
+import queryParam from "../validator/query-param";
 
 const router = Router();
 
-const tenantService = new TenantService();
 const tenantRepository = AppDataSource.getRepository(Tenant);
+const tenantService = new TenantService(tenantRepository);
 const tenantController = new TenantController(tenantService, tenantRepository, logger);
 
 router.post(
@@ -26,7 +27,9 @@ router.post(
 );
 
 // List of all tenants
-router.get("/", (req: Request, res: Response, next: NextFunction) => tenantController.listTenant(req, res, next));
+router.get("/", authenticate, queryParam, validateRequest, (req: Request, res: Response, next: NextFunction) =>
+  tenantController.listTenant(req, res, next)
+);
 
 // GET tenant by id
 router.get("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: Response, next: NextFunction) =>

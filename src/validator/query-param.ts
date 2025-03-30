@@ -6,7 +6,7 @@ const queryParam = checkSchema(
       customSanitizer: {
         options: (value) => {
           const page = Number(value);
-          return isNaN(page) ? 1 : page;
+          return page < 1 ? 1 : isNaN(page) ? 1 : page;
         },
       },
     },
@@ -14,7 +14,7 @@ const queryParam = checkSchema(
       customSanitizer: {
         options: (value) => {
           const perPage = Number(value);
-          return isNaN(perPage) ? 6 : perPage;
+          return perPage < 1 ? 5 : isNaN(perPage) ? 5 : perPage;
         },
       },
     },

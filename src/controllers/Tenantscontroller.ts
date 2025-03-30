@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { TenantService } from "../services/TenantService";
-import { ITenant } from "../types";
+import { ITenant, TenantQueryParams } from "../types";
 import { Repository } from "typeorm";
 import { Tenant } from "../entity/Tenant";
 import { Logger } from "winston";
 import createHttpError from "http-errors";
+import { matchedData } from "express-validator";
 
 export class TenantController {
   constructor(
@@ -17,7 +18,7 @@ export class TenantController {
       const { name, address } = req.body as ITenant;
 
       // Create a new tenant
-      const tenant = await this.tenantService.createTenant({ name, address }, this.tenantRepository);
+      const tenant = await this.tenantService.createTenant({ name, address });
 
       this.logger.info(`Tenant created, id:${tenant.id}`);
 
@@ -33,8 +34,14 @@ export class TenantController {
 
   async listTenant(req: Request, res: Response, next: NextFunction) {
     try {
-      const tenants = await this.tenantRepository.find({});
-      res.status(200).json(tenants);
+      const validateQuery = matchedData(req, { onlyValidData: true });
+      const [tenants, count] = await this.tenantService.listTenants(validateQuery as TenantQueryParams);
+      res.status(200).json({
+        data: tenants,
+        total: count,
+        currentPage: validateQuery.currentPage as number,
+        perPage: validateQuery.perPage as number,
+      });
     } catch (err) {
       next(err);
       return;

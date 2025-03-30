@@ -36,7 +36,9 @@ router.get(
 );
 
 // GET user by id
-router.get("/:id", (req: Request, res: Response, next: NextFunction) => userController.getUserById(req, res, next));
+router.get("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: Response, next: NextFunction) =>
+  userController.getUserById(req, res, next)
+);
 
 // PUT user by id
 router.put(

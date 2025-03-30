@@ -57,6 +57,7 @@ export class UserService {
       queryBuilder.andWhere("user.role = :role", { role: validateQuery.role });
     }
     return await queryBuilder
+      .leftJoinAndSelect("user.tenant", "tenant")
       .skip((validateQuery.currentPage - 1) * validateQuery.perPage)
       .take(validateQuery.perPage)
       .getManyAndCount();

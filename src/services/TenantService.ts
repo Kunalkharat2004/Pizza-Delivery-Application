@@ -17,10 +17,16 @@ export class TenantService {
 
   async listTenants(validateQuery: TenantQueryParams) {
     const queryBuilder = this.tenantRepository.createQueryBuilder("tenant");
-    // const searchQuery = `%${validateQuery.q}%`;
+    const searchQuery = `%${validateQuery.q}%`;
+    if (validateQuery.q) {
+      queryBuilder
+        .where("tenant.name ILIKE :searchQuery", { searchQuery })
+        .orWhere("tenant.address ILIKE :searchQuery", { searchQuery });
+    }
     return await queryBuilder
       .skip((validateQuery.currentPage - 1) * validateQuery.perPage)
       .take(validateQuery.perPage)
+      .orderBy("tenant.createdAt", "DESC")
       .getManyAndCount();
   }
 }

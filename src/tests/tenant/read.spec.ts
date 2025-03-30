@@ -64,6 +64,29 @@ describe("GET /tenant/:id", () => {
       expect(response.body.currentPage).toBe(1);
       stopJwks();
     });
+    it("should return appropriate response when search query is provided", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+      // Arrange
+      const tenantData = {
+        name: "Rajesh Sweet Shop",
+        address: "Pune, India",
+      };
+      const response = await request(app).post("/tenant").set("Cookie", `accessToken=${adminToken}`).send(tenantData);  
+      const tenantId = (response.body as ITenant).id;
+      // Act
+      const response2 = await request(app).get(`/tenant?q=Rajesh Sweet Shop&currentPage=1&perPage=5`).set("Cookie", `accessToken=${adminToken}`);
+      // Assert
+      expect(response2.status).toBe(200);
+      expect(response2.body.data[0].id).toBe(tenantId);
+      expect(response2.body.data[0].name).toBe("Rajesh Sweet Shop");
+      expect(response2.body.data[0].address).toBe("Pune, India");
+      stopJwks();
+    });
   });
 
   describe("Get Single Tenant by ID Endpoint", () => {

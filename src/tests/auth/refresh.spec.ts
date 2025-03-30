@@ -45,7 +45,7 @@ describe("GET /auth/refresh", () => {
   describe("Refresh token provided", () => {
     it("should return 200 status code", async () => {
       // Act
-      const response = await request(app).get("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
+      const response = await request(app).post("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
 
       // Assert
       expect(response.status).toBe(200);
@@ -53,7 +53,7 @@ describe("GET /auth/refresh", () => {
 
     it("should return a json response", async () => {
       // Act
-      const response = await request(app).get("/auth/refresh").send();
+      const response = await request(app).post("/auth/refresh").send();
 
       // Assert
       expect(response.header["content-type"]).toBe("application/json; charset=utf-8");
@@ -68,7 +68,7 @@ describe("GET /auth/refresh", () => {
         await refreshTokenRepo.delete(decoded.jti);
       }
       // Act
-      const response = await request(app).get("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
+      const response = await request(app).post("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
 
       // Assert
       expect(response.status).toBe(401);
@@ -76,7 +76,7 @@ describe("GET /auth/refresh", () => {
 
     it("should set accessToken and refreshToken in cookie", async () => {
       // Act
-      const response = await request(app).get("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
+      const response = await request(app).post("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
 
       const cookies = (response.headers as AuthHeaders)["set-cookie"] || [];
 
@@ -102,7 +102,7 @@ describe("GET /auth/refresh", () => {
       const refreshToken = "invalid-token";
 
       // Act
-      const response = await request(app).get("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
+      const response = await request(app).post("/auth/refresh").set("Cookie", `refreshToken=${refreshToken}`).send();
 
       // Assert
       expect(response.status).toBe(401);

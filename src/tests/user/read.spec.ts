@@ -25,6 +25,16 @@ describe("GET /users", () => {
     tenantId: null,
   };
 
+  const customerData = {
+    firstName: "John",
+    lastName: "Doe",
+    email: "john@gmail.com",
+    password: "John$123",
+    address: "Mumbai, India",
+    role: Roles.CUSTOMER,
+    tenantId: null,
+  };
+
   beforeAll(async () => {
     connection = await AppDataSource.initialize();
   });
@@ -40,56 +50,195 @@ describe("GET /users", () => {
   });
 
   describe("List of users", () => {
-    it("should return 200 status code", async () => {
-      // Act
+    it("should return 401 status code if no token is provided", async () => {
       const response = await request(app).get("/users");
-
-      // Assert
-      expect(response.status).toBe(200);
+      expect(response.statusCode).toBe(401);
     });
-  });
 
-  describe("Get Single User by ID Endpoint", () => {
-    it("should return 200 status code", async () => {
+    it("should return 403 status code if role is not admin", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.CUSTOMER,
+      });
+      const response = await request(app).get("/users").set("Cookie", `accessToken=${adminToken}`);
+      expect(response.statusCode).toBe(403);
+      stopJwks();
+    });
+
+    it("should return 200 status code and empty list when no users exist", async () => {
       jwksMock = createJWKSMock("http://localhost:3200");
       stopJwks = jwksMock.start();
       adminToken = jwksMock.token({
         sub: "1234567890",
         role: Roles.ADMIN,
       });
-      const response = await request(app)
+
+      const response = await request(app).get("/users").set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.data).toEqual([]);
+      expect(response.body.total).toBe(0);
+      stopJwks();
+    });
+
+    it("should return paginated users with correct total count", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+
+      // Create multiple users
+      await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
         .send({ ...managerData, tenantId: tenant.id });
 
-      const userId = (response.body as IUser).id;
-      // Act
-      const response1 = await request(app).get(`/users/${userId}`);
-      // Assert
-      expect(response1.statusCode).toBe(200);
+      await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...customerData, tenantId: tenant.id });
+
+      const response = await request(app)
+        .get("/users?currentPage=1&perPage=2")
+        .set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.data.length).toBeLessThanOrEqual(2);
+      expect(response.body.total).toBeGreaterThanOrEqual(2);
+      expect(response.body.currentPage).toBe(1);
+      expect(response.body.perPage).toBe(2);
       stopJwks();
     });
-    // it("should return 404 status code if tenant doesn't exists", async () => {
-    //   jwksMock = createJWKSMock("http://localhost:3200");
-    //   stopJwks = jwksMock.start();
-    //   adminToken = jwksMock.token({
-    //     sub: "1234567890",
-    //     role: Roles.ADMIN,
-    //   });
-    //   // Arrange
-    //   const tenantData = {
-    //     name: "Rajesh Sweet Shop",
-    //     address: "Pune, India",
-    //   };
-    //   const response = await request(app).post("/tenant").set("Cookie", `accessToken=${adminToken}`).send(tenantData);
-    //   const tenantId = (response.body as ITenant).id;
-    //   await request(app).delete(`/tenant/${tenantId}`).set("Cookie", `accessToken=${adminToken}`);
 
-    //   // Act
-    //   const response2 = await request(app).get(`/tenant/${tenantId}`);
-    //   // Assert
-    //   expect(response2.statusCode).toBe(404);
-    //   stopJwks();
-    // });
+    it("should filter users by role", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+
+      // Create users with different roles
+      await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
+
+      await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...customerData, tenantId: tenant.id });
+
+      const response = await request(app)
+        .get("/users?role=manager")
+        .set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.data.every((user: IUser) => user.role === Roles.MANAGER)).toBe(true);
+      stopJwks();
+    });
+
+    it("should search users by name or email", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+
+      // Create users
+      await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
+
+      await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...customerData, tenantId: tenant.id });
+
+      const response = await request(app)
+        .get("/users?q=shraddha")
+        .set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body.data.some((user: IUser) => 
+        user.firstName.toLowerCase().includes("shraddha") || 
+        user.email.toLowerCase().includes("shraddha")
+      )).toBe(true);
+      stopJwks();
+    });
+  });
+
+  describe("Get Single User by ID Endpoint", () => {
+    it("should return 200 status code and user data for valid ID", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+
+      // Create a user first
+      const createResponse = await request(app)
+        .post("/users")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send({ ...managerData, tenantId: tenant.id });
+
+      const userId = createResponse.body.id;
+
+      // Get the user
+      const response = await request(app)
+        .get(`/users/${userId}`)
+        .set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty("id", userId);
+      expect(response.body).toHaveProperty("firstName", managerData.firstName);
+      expect(response.body).toHaveProperty("email", managerData.email);
+      stopJwks();
+    });
+
+    it("should return 404 status code for non-existent user ID", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+
+      const nonExistentId = "123e4567-e89b-12d3-a456-426614174000";
+      const response = await request(app)
+        .get(`/users/${nonExistentId}`)
+        .set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(404);
+      stopJwks();
+    });
+
+    it("should return 401 status code if no token is provided", async () => {
+      const response = await request(app).get("/users/123");
+      expect(response.statusCode).toBe(401);
+    });
+
+    it("should return 403 status code if role is not admin", async () => {
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.CUSTOMER,
+      });
+
+      const response = await request(app)
+        .get("/users/123")
+        .set("Cookie", `accessToken=${adminToken}`);
+
+      expect(response.statusCode).toBe(403);
+      stopJwks();
+    });
   });
 });

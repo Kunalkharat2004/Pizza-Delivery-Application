@@ -8,7 +8,7 @@ import { Roles } from "../../constants";
 import { createTenant } from "../utils";
 import { Tenant } from "../../entity/Tenant";
 
-describe("PUT /users/:id", () => {
+describe("patch /users/:id", () => {
   let connection: DataSource;
   let jwksMock: JWKSMock;
   let adminToken: string;
@@ -54,7 +54,7 @@ describe("PUT /users/:id", () => {
       const userId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
-        .put(`/users/${userId}`)
+        .patch(`/users/${userId}`)
         .send({ ...managerData, firstName: "Rajesh", address: "Pune, India" });
       // Assert
       expect(response1.statusCode).toBe(401);
@@ -74,7 +74,7 @@ describe("PUT /users/:id", () => {
       const userId = (response.body as IUser).id;
       // Act
       const response1 = await request(app)
-        .put(`/users/${userId}`)
+        .patch(`/users/${userId}`)
         .set("Cookie", `accessToken=${adminToken}`)
         .send({ ...managerData });
       // Assert
@@ -96,7 +96,7 @@ describe("PUT /users/:id", () => {
       const userId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
-        .put(`/users/${userId}`)
+        .patch(`/users/${userId}`)
         .set("Cookie", `accessToken=${adminToken}`)
         .send({ ...managerData, firstName: "Rajesh", address: "Pune, India", tenantId: tenant.id });
       // Assert

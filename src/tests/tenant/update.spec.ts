@@ -6,7 +6,7 @@ import { ITenant } from "../../types";
 import { createJWKSMock, JWKSMock } from "mock-jwks";
 import { Roles } from "../../constants";
 
-describe("PUT /tenant/:id", () => {
+describe("patch /tenant/:id", () => {
   let connection: DataSource;
   let jwksMock: JWKSMock;
   let adminToken: string;
@@ -42,7 +42,7 @@ describe("PUT /tenant/:id", () => {
       const tenantId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
-        .put(`/tenant/${tenantId}`)
+        .patch(`/tenant/${tenantId}`)
         .send({ name: "Rajesh Sweet Shop", address: "Pune, India" });
       // Assert
       expect(response1.statusCode).toBe(401);
@@ -64,7 +64,7 @@ describe("PUT /tenant/:id", () => {
       const tenantId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
-        .put(`/tenant/${tenantId}`)
+        .patch(`/tenant/${tenantId}`)
         .set("Cookie", `accessToken=${adminToken}`)
         .send({ name: "Rajesh Sweet Shop", address: "Pune, India" });
       // Assert
@@ -87,7 +87,7 @@ describe("PUT /tenant/:id", () => {
       const tenantId = (response.body as ITenant).id;
       // Act
       const response1 = await request(app)
-        .put(`/tenant/${tenantId}`)
+        .patch(`/tenant/${tenantId}`)
         .set("Cookie", `accessToken=${adminToken}`)
         .send({ name: "Rajesh Sweet Shop", address: "Pune, India" });
       // Assert

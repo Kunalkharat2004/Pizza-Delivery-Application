@@ -3,6 +3,7 @@ import { User } from "../entity/User";
 import { IUser, UserQueryParams } from "../types";
 import createHttpError from "http-errors";
 import bcrypt from "bcryptjs";
+import { Roles } from "../constants";
 
 export class UserService {
   constructor(private readonly userRepository: Repository<User>) {}
@@ -99,14 +100,18 @@ export class UserService {
   }
 
   async updateUser({ id, firstName, lastName, email, password, address, role, tenantId }: IUser) {
+    // if the role of user is customer then tenantId should set to null
     try {
+      if (role === Roles.CUSTOMER) {
+        tenantId = undefined;
+      }
       return await this.userRepository.update(id as string, {
         firstName,
         lastName,
         email,
         address,
         role,
-        tenant: tenantId ? { id: tenantId } : undefined,
+        tenant: tenantId ? { id: tenantId } : null,
       });
     } catch (err) {
       const error = createHttpError(500, "Failed to update user");

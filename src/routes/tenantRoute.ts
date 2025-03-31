@@ -36,8 +36,8 @@ router.get("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: R
   tenantController.getTenantById(req, res, next)
 );
 
-// PUT tenant by id
-router.put(
+// PATCH tenant by id
+router.patch(
   "/:id",
   authenticate,
   canAccess([Roles.ADMIN]),

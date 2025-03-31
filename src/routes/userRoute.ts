@@ -10,6 +10,7 @@ import logger from "../config/logger";
 import { UserService } from "../services/UserService";
 import { User } from "../entity/User";
 import queryParam from "../validator/query-param";
+import validateUserUpdateCredentials from "../validator/update-validation";
 
 const router = Router();
 const userRepository = AppDataSource.getRepository(User);
@@ -40,12 +41,12 @@ router.get("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: R
   userController.getUserById(req, res, next)
 );
 
-// PUT user by id
-router.put(
+// PATCH user by id
+router.patch(
   "/:id",
   authenticate,
   canAccess([Roles.ADMIN]),
-  validateUserCredentials,
+  validateUserUpdateCredentials,
   validateRequest,
   (req: Request, res: Response, next: NextFunction) => userController.updateUser(req, res, next)
 );

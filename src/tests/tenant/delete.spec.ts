@@ -5,6 +5,8 @@ import { AppDataSource } from "../../config/data-source";
 import { ITenant } from "../../types";
 import { createJWKSMock, JWKSMock } from "mock-jwks";
 import { Roles } from "../../constants";
+import { User } from "../../entity/User";
+import { Tenant } from "../../entity/Tenant";
 
 describe("DELETE /tenant/:id", () => {
   let connection: DataSource;
@@ -74,7 +76,7 @@ describe("DELETE /tenant/:id", () => {
       expect(response1.statusCode).toBe(403);
       stopJwks();
     });
-    it("should return 200 status code", async () => {
+    it("should return 200 status code when deleting tenant without managers", async () => {
       // Arrange
       jwksMock = createJWKSMock("http://localhost:3200");
       stopJwks = jwksMock.start();
@@ -95,6 +97,95 @@ describe("DELETE /tenant/:id", () => {
         .send();
       // Assert
       expect(response1.statusCode).toBe(200);
+      stopJwks();
+    });
+    it("should delete tenant and its managers when deleteManagers=true", async () => {
+      // Arrange
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+      
+      // Create tenant
+      const tenantData = {
+        name: "Rajesh Sweet Shop",
+        address: "Pune, India",
+      };
+      const tenantResponse = await request(app)
+        .post("/tenant")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send(tenantData);
+      const tenantId = (tenantResponse.body as ITenant).id;
+
+      // Create managers for the tenant
+      const userRepository = connection.getRepository(User);
+      const manager1 = userRepository.create({
+        firstName: "Manager1",
+        lastName: "Test",
+        email: "manager1@test.com",
+        password: "Password$123",
+        role: Roles.MANAGER,
+        tenant: { id: tenantId },
+        address: "Pune, India",
+      });
+      const manager2 = userRepository.create({
+        firstName: "Manager2",
+        lastName: "Test",
+        email: "manager2@test.com",
+        password: "Password$123",
+        role: Roles.MANAGER,
+        tenant: { id: tenantId },
+        address: "Pune, India",
+      });
+      await userRepository.save([manager1, manager2]);
+
+      // Act
+      const response = await request(app)
+        .delete(`/tenant/${tenantId}?deleteManagers=true`)
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send();
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      
+      // Verify tenant is deleted
+      const tenantRepository = connection.getRepository(Tenant);
+      const deletedTenant = await tenantRepository.findOneBy({ id: tenantId });
+      expect(deletedTenant).toBeNull();
+
+      // Verify managers are deleted
+      const managers = await userRepository.find({
+        where: {
+          tenant: { id: tenantId },
+          role: Roles.MANAGER
+        }
+      });
+      expect(managers).toHaveLength(0);
+      
+      stopJwks();
+    });
+  
+    it("should return 404 when trying to delete non-existent tenant", async () => {
+      // Arrange
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+      
+      const nonExistentTenantId = "9e462c83-5abe-4ccf-a3f2-14d0539ce820";
+
+      // Act
+      const response = await request(app)
+        .delete(`/tenant/${nonExistentTenantId}`)
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send();
+      // Assert
+      expect(response.statusCode).toBe(404);
+      
       stopJwks();
     });
   });

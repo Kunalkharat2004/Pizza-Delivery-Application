@@ -7,6 +7,7 @@ import { createJWKSMock, JWKSMock } from "mock-jwks";
 import { Roles } from "../../constants";
 import { User } from "../../entity/User";
 import { Tenant } from "../../entity/Tenant";
+import { In } from "typeorm";
 
 describe("DELETE /tenant/:id", () => {
   let connection: DataSource;
@@ -185,6 +186,40 @@ describe("DELETE /tenant/:id", () => {
         .send();
       // Assert
       expect(response.statusCode).toBe(404);
+      
+      stopJwks();
+    });
+
+    it("should return correct response body structure", async () => {
+      // Arrange
+      jwksMock = createJWKSMock("http://localhost:3200");
+      stopJwks = jwksMock.start();
+      adminToken = jwksMock.token({
+        sub: "1234567890",
+        role: Roles.ADMIN,
+      });
+      
+      // Create tenant
+      const tenantData = {
+        name: "Rajesh Sweet Shop",
+        address: "Pune, India",
+      };
+      const tenantResponse = await request(app)
+        .post("/tenant")
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send(tenantData);
+      const tenantId = (tenantResponse.body as ITenant).id;
+
+      // Act
+      const response = await request(app)
+        .delete(`/tenant/${tenantId}`)
+        .set("Cookie", `accessToken=${adminToken}`)
+        .send();
+
+      // Assert
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toHaveProperty("message", "Tenant deleted successfully");
+      expect(response.body).toHaveProperty("id", tenantId);
       
       stopJwks();
     });

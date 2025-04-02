@@ -1,10 +1,17 @@
-import { Repository } from "typeorm";
+import { Repository, DataSource } from "typeorm";
 import { Tenant } from "../entity/Tenant";
-import createHttpError from "http-errors";
+import createHttpError, { HttpError } from "http-errors";
 import { ITenant, TenantQueryParams } from "../types";
+import { User } from "../entity/User";
+import { Roles } from "../constants";
 
 export class TenantService {
-  constructor(private readonly tenantRepository: Repository<Tenant>) {}
+  constructor(
+    private readonly tenantRepository: Repository<Tenant>,
+    private readonly userRepository: Repository<User>,
+    private readonly dataSource: DataSource
+  ) {}
+
   async createTenant({ name, address }: ITenant): Promise<Tenant> {
     try {
       const tenant = this.tenantRepository.create({ name, address });
@@ -28,5 +35,47 @@ export class TenantService {
       .take(validateQuery.perPage)
       .orderBy("tenant.createdAt", "DESC")
       .getManyAndCount();
+  }
+
+  async getManagersCount(tenantId: string): Promise<number> {
+    return await this.userRepository.count({
+      where: {
+        tenant: { id: tenantId },
+        role: Roles.MANAGER,
+      },
+    });
+  }
+
+  async deleteTenantWithManagers(tenantId: string, deleteManagers: boolean): Promise<void> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // Use queryRunner's manager for transactional operations
+      const tenant = await queryRunner.manager.findOneBy(Tenant, { id: tenantId });
+      if (!tenant) {
+        throw createHttpError(404, "Tenant not found");
+      }
+
+      if (deleteManagers) {
+        await queryRunner.manager.delete(User, {
+          tenant: { id: tenantId },
+          role: Roles.MANAGER,
+        });
+      }
+
+      await queryRunner.manager.delete(Tenant, tenantId);
+
+      await queryRunner.commitTransaction(); // Commit if all successful
+    } catch (err) {
+      await queryRunner.rollbackTransaction(); // Rollback on any error
+      // Re-throw the error or handle it appropriately
+      if (err instanceof HttpError) throw err; // Keep HTTP errors
+      const error = err as Error;
+      throw createHttpError(500, `Failed to delete tenant: ${error.message}`);
+    } finally {
+      await queryRunner.release(); // Always release the queryRunner
+    }
   }
 }

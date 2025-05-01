@@ -42,8 +42,6 @@ describe("POST /tenant", () => {
 
   describe("Given all fileds", () => {
     it("should return 201 status code", async () => {
-      // Arrange
-
       // Act
       const response = await request(app).post("/tenant").set("Cookie", `accessToken=${adminToken}`).send(tenantData);
 

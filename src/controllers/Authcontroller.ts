@@ -42,7 +42,6 @@ export class AuthController {
       lastName,
       email,
     });
-
     try {
       const user = await this.userService.createUser({
         firstName,
@@ -93,10 +92,10 @@ export class AuthController {
         next(error);
         return;
       }
-
       const payload: JwtPayload = {
         sub: user.id,
         role: user.role,
+        tenantId: user.tenant ? user.tenant.id : null,
       };
 
       const accessToken = this.tokenService.generateAccessToken(payload);
@@ -128,6 +127,7 @@ export class AuthController {
     const payload: JwtPayload = {
       sub: req.auth.sub,
       role: req.auth.role,
+      tenantId: req.auth.tenantId,
     };
 
     // Generate a new AccessToken

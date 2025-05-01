@@ -68,6 +68,9 @@ export class UserService {
     const user = await this.userRepository.findOne({
       where: { email: email },
       select: ["id", "firstName", "lastName", "email", "password", "address", "role"],
+      relations: {
+        tenant: true,
+      },
     });
 
     if (!user) {
@@ -102,7 +105,7 @@ export class UserService {
   async updateUser({ id, firstName, lastName, email, password, address, role, tenantId }: IUser) {
     // if the role of user is customer then tenantId should set to null
     try {
-      if (role === Roles.CUSTOMER) {
+      if (role === Roles.CUSTOMER || role === Roles.ADMIN) {
         tenantId = undefined;
       }
       return await this.userRepository.update(id as string, {

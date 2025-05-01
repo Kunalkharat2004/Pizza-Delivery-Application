@@ -64,6 +64,21 @@ export class TenantController {
     }
   }
 
+  // Get managers count by tenant id
+  async getManagersCount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const tenantId = req.params.id;
+      const managersCount = await this.tenantService.getManagersCount(tenantId);
+      res.json({
+        message: "Managers count fetched successfully",
+        count: managersCount,
+      });
+    } catch (err) {
+      next(err);
+      return;
+    }
+  }
+
   async updateTenant(req: Request, response: Response, next: NextFunction) {
     try {
       const tenantId = req.params.id;
@@ -87,18 +102,13 @@ export class TenantController {
   async deleteTenant(req: Request, res: Response, next: NextFunction) {
     try {
       const tenantId = req.params.id;
-      const tenant = await this.tenantRepository.findOneBy({ id: tenantId });
-      if (!tenant) {
-        const error = createHttpError(404, "Tenant not found");
-        next(error);
-        return;
-      }
+      const deleteManagers = req.query.deleteManagers === "true";
 
-      await this.tenantRepository.delete(tenant.id);
+      await this.tenantService.deleteTenantWithManagers(tenantId, deleteManagers);
 
       res.json({
         message: "Tenant deleted successfully",
-        id: tenant.id,
+        id: tenantId,
       });
     } catch (err) {
       next(err);

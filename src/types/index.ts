@@ -30,6 +30,7 @@ export interface AuthRequest extends Request {
     sub: string;
     role: string;
     jti: string;
+    tenantId: string;
   };
 }
 

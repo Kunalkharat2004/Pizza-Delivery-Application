@@ -10,11 +10,12 @@ import canAccess from "../middlewares/canAccess";
 import validateRequest from "../middlewares/validate-request";
 import validateTenant from "../validator/tenant-validator";
 import queryParam from "../validator/query-param";
-
+import { User } from "../entity/User";
 const router = Router();
 
 const tenantRepository = AppDataSource.getRepository(Tenant);
-const tenantService = new TenantService(tenantRepository);
+const userRepository = AppDataSource.getRepository(User);
+const tenantService = new TenantService(tenantRepository, userRepository, AppDataSource);
 const tenantController = new TenantController(tenantService, tenantRepository, logger);
 
 router.post(
@@ -34,6 +35,14 @@ router.get("/", authenticate, queryParam, validateRequest, (req: Request, res: R
 // GET tenant by id
 router.get("/:id", authenticate, canAccess([Roles.ADMIN]), (req: Request, res: Response, next: NextFunction) =>
   tenantController.getTenantById(req, res, next)
+);
+
+// GET managers count by tenant id
+router.get(
+  "/:id/managers-count",
+  authenticate,
+  canAccess([Roles.ADMIN]),
+  (req: Request, res: Response, next: NextFunction) => tenantController.getManagersCount(req, res, next)
 );
 
 // PATCH tenant by id

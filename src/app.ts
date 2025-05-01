@@ -7,6 +7,7 @@ import tenantRoute from "./routes/tenantRoute";
 import userRoute from "./routes/userRoute";
 import cors from "cors";
 import config from "./config/config";
+import { requestLogger } from "./middlewares/requestLogger";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(cookieParser());
 
+app.use(requestLogger);
 app.get("/", (req: Request, res: Response) => {
   res.json({
     message: "Hello SnowBell, This message is coming from the server",

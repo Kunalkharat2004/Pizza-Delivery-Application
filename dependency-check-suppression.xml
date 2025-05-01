@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+   <!-- Examples of how to suppress different types of findings -->
+   
+   <!-- Example 1: Suppress a specific CVE for all packages -->
+   <!--
+   <suppress>
+      <notes>Documented reason why this is suppressed - e.g., "False positive confirmed on 2025-05-01"</notes>
+      <cve>CVE-2022-12345</cve>
+   </suppress>
+   -->
+   
+   <!-- Example 2: Suppress a specific CVE for a specific package -->
+   <!--
+   <suppress>
+      <notes>Vulnerability doesn't affect our usage of the package</notes>
+      <packageUrl regex="true">^pkg:npm/axios@.*$</packageUrl>
+      <cve>CVE-2023-45857</cve>
+   </suppress>
+   -->
+   
+   <!-- Example 3: Suppress by vulnerability name pattern -->
+   <!--
+   <suppress>
+      <notes>Suppressing this class of vulnerabilities as we don't use the affected features</notes>
+      <vulnerabilityName regex="true">.*Prototype Pollution.*</vulnerabilityName>
+   </suppress>
+   -->
+   
+   <!-- Example 4: Suppress by file path pattern -->
+   <!--
+   <suppress>
+      <notes>Suppressing findings in test dependencies</notes>
+      <filePath regex="true">.*\/node_modules\/jest\/.*</filePath>
+   </suppress>
+   -->
+   
+   <!-- Example 5: Suppress by CVSS score for a specific package -->
+   <!--
+   <suppress>
+      <notes>Low severity issues in this package don't affect us</notes>
+      <packageUrl regex="true">^pkg:npm/lodash@.*$</packageUrl>
+      <cvssBelow>7.0</cvssBelow>
+   </suppress>
+   -->
+</suppressions>

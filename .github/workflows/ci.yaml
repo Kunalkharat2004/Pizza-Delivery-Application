@@ -28,7 +28,7 @@ jobs:
         with:
           project: 'NodeJS-TypeScript-Project'
           path: '.'
-          format: 'HTML'
+          format: 'HTML JSON'  # Added JSON format for parsing
           out: 'reports/dependency-check'
           args: >
             --failOnCVSS 8
@@ -42,6 +42,55 @@ jobs:
         with:
           name: dependency-check-report
           path: reports/dependency-check
+          
+      # Parse dependency check results and send to API
+      - name: Parse and send dependency check results
+        run: |
+          # Parse the JSON report
+          REPORT_PATH="reports/dependency-check/dependency-check-report.json"
+          if [ -f "$REPORT_PATH" ]; then
+            # Count vulnerabilities by severity
+            CRITICAL=$(jq '.dependencies | map(.vulnerabilities? // []) | flatten | map(select(.severity == "CRITICAL")) | length' $REPORT_PATH)
+            HIGH=$(jq '.dependencies | map(.vulnerabilities? // []) | flatten | map(select(.severity == "HIGH")) | length' $REPORT_PATH)
+            MEDIUM=$(jq '.dependencies | map(.vulnerabilities? // []) | flatten | map(select(.severity == "MEDIUM")) | length' $REPORT_PATH)
+            LOW=$(jq '.dependencies | map(.vulnerabilities? // []) | flatten | map(select(.severity == "LOW")) | length' $REPORT_PATH)
+            
+            # Extract details for the top vulnerabilities
+            DETAILS=$(jq '[.dependencies | map(select(.vulnerabilities != null)) | .[] | .vulnerabilities[] | {dependency: .packageName, vulnerability: .name, severity: .severity, cvss: .cvssv3?.baseScore}] | sort_by(.cvss) | reverse | .[0:10]' $REPORT_PATH)
+            
+            # Create the payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              --argjson critical "$CRITICAL" \
+              --argjson high "$HIGH" \
+              --argjson medium "$MEDIUM" \
+              --argjson low "$LOW" \
+              --argjson details "$DETAILS" \
+              '{
+                "scanType": "dependency-check",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": $critical,
+                    "high": $high,
+                    "medium": $medium,
+                    "low": $low
+                  },
+                  "details": $details
+                }
+              }')
+            
+            # Send to API with Github metadata
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          else
+            echo "Dependency check report not found"
+          fi
       
       # Code security analysis with CodeQL
       - name: Initialize CodeQL
@@ -51,6 +100,55 @@ jobs:
           
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
+        
+      # Parse and send CodeQL results
+      - name: Parse and send CodeQL results
+        run: |
+          # Look for SARIF file
+          SARIF_PATH=$(find ${{ github.workspace }}/results -name '*.sarif' -type f | head -n 1)
+          if [ -n "$SARIF_PATH" ]; then
+            # Parse the SARIF file
+            CRITICAL=$(jq '[.runs[].results[] | select(.level == "error")] | length' $SARIF_PATH)
+            HIGH=$(jq '[.runs[].results[] | select(.level == "warning")] | length' $SARIF_PATH)
+            MEDIUM=$(jq '[.runs[].results[] | select(.level == "note")] | length' $SARIF_PATH)
+            LOW=$(jq '[.runs[].results[] | select(.level == "none")] | length' $SARIF_PATH)
+            
+            # Extract details for top issues
+            DETAILS=$(jq '[.runs[].results[] | {rule: .ruleId, severity: .level, message: .message.text, location: .locations[0].physicalLocation.artifactLocation.uri}] | sort_by(.severity) | reverse | .[0:10]' $SARIF_PATH)
+            
+            # Create payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              --argjson critical "${CRITICAL:-0}" \
+              --argjson high "${HIGH:-0}" \
+              --argjson medium "${MEDIUM:-0}" \
+              --argjson low "${LOW:-0}" \
+              --argjson details "$DETAILS" \
+              '{
+                "scanType": "codeql",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": $critical,
+                    "high": $high,
+                    "medium": $medium,
+                    "low": $low
+                  },
+                  "details": $details
+                }
+              }')
+            
+            # Send to API with Github metadata
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          else
+            echo "CodeQL SARIF file not found"
+          fi
       
       # Secret scanning
       - name: TruffleHog Secret Scanner
@@ -58,7 +156,48 @@ jobs:
         with:
           path: ./
           extra_args: --debug --only-verified
-          # Removed base and head parameters to scan the entire repository instead of just changes
+          format: json
+          output: trufflehog-results.json
+          
+      # Parse and send TruffleHog results
+      - name: Parse and send TruffleHog results
+        run: |
+          # Check if results file exists
+          REPORT_PATH="trufflehog-results.json"
+          if [ -f "$REPORT_PATH" ]; then
+            # Count findings by severity (TruffleHog doesn't use severity levels, so count by type)
+            TOTAL_SECRETS=$(jq '. | length' $REPORT_PATH)
+            
+            # Extract details for findings
+            DETAILS=$(jq '[.[] | {secretType: .DetectorType, file: .SourceMetadata.Data.Filename, line: .SourceMetadata.Data.Line}]' $REPORT_PATH)
+            
+            # Create payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              --argjson total "${TOTAL_SECRETS:-0}" \
+              --argjson details "$DETAILS" \
+              '{
+                "scanType": "trufflehog",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "total": $total
+                  },
+                  "details": $details
+                }
+              }')
+            
+            # Send to API with Github metadata
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          else
+            echo "TruffleHog report not found"
+          fi
           
   build-and-test:
     name: Build and Test
@@ -93,6 +232,49 @@ jobs:
           ADMIN_LASTNAME: ${{secrets.TEST_ADMIN_LASTNAME}}
           ADMIN_ADDRESS: ${{secrets.TEST_ADMINADDRESS}}
           
+      # Send test coverage results
+      - name: Parse and send test coverage results
+        run: |
+          # Check if coverage report exists
+          if [ -f "coverage/coverage-summary.json" ]; then
+            # Parse coverage data
+            COVERAGE=$(jq '.total.lines.pct' coverage/coverage-summary.json)
+            STATEMENTS=$(jq '.total.statements.pct' coverage/coverage-summary.json)
+            FUNCTIONS=$(jq '.total.functions.pct' coverage/coverage-summary.json)
+            BRANCHES=$(jq '.total.branches.pct' coverage/coverage-summary.json)
+            
+            # Create payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              --argjson coverage "${COVERAGE:-0}" \
+              --argjson statements "${STATEMENTS:-0}" \
+              --argjson functions "${FUNCTIONS:-0}" \
+              --argjson branches "${BRANCHES:-0}" \
+              '{
+                "scanType": "test-coverage",
+                "buildId": $buildId,
+                "data": {
+                  "metrics": {
+                    "coverage": $coverage,
+                    "statements": $statements,
+                    "functions": $functions,
+                    "branches": $branches
+                  }
+                }
+              }')
+            
+            # Send to API with Github metadata
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          else
+            echo "Coverage report not found"
+          fi
+          
       - name: Build-ts
         run: npm run build
         
@@ -101,6 +283,64 @@ jobs:
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+          
+      # Parse and send SonarQube results
+      - name: Parse and send SonarQube results
+        run: |
+          # Wait for SonarQube analysis to complete
+          sleep 10
+          
+          # Get SonarQube project key from sonar-project.properties
+          SONAR_PROJECT_KEY=$(grep "sonar.projectKey" sonar-project.properties | cut -d'=' -f2)
+          
+          # Get metrics from SonarQube API
+          SONAR_METRICS=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "${{ secrets.SONARQUBE_URL }}/api/measures/component?component=${SONAR_PROJECT_KEY}&metricKeys=bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density")
+          
+          # Parse metrics
+          BUGS=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "bugs") | .value' -r)
+          VULNERABILITIES=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "vulnerabilities") | .value' -r)
+          CODE_SMELLS=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "code_smells") | .value' -r)
+          COVERAGE=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "coverage") | .value' -r)
+          DUPLICATION=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "duplicated_lines_density") | .value' -r)
+          
+          # Get issues from SonarQube API
+          SONAR_ISSUES=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "${{ secrets.SONARQUBE_URL }}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&severities=BLOCKER,CRITICAL,MAJOR&ps=10")
+          
+          # Format issues
+          ISSUES=$(echo $SONAR_ISSUES | jq '[.issues[] | {issue: .message, type: .type, severity: .severity, file: .component}]')
+          
+          # Create payload
+          PAYLOAD=$(jq -n \
+            --arg buildId "$GITHUB_RUN_ID" \
+            --arg bugs "${BUGS:-0}" \
+            --arg vulnerabilities "${VULNERABILITIES:-0}" \
+            --arg codeSmells "${CODE_SMELLS:-0}" \
+            --arg coverage "${COVERAGE:-0}" \
+            --arg duplication "${DUPLICATION:-0}" \
+            --argjson issues "$ISSUES" \
+            '{
+              "scanType": "sonarqube",
+              "buildId": $buildId,
+              "data": {
+                "metrics": {
+                  "bugs": ($bugs | tonumber),
+                  "vulnerabilities": ($vulnerabilities | tonumber),
+                  "codeSmells": ($codeSmells | tonumber),
+                  "coverage": ($coverage | tonumber),
+                  "duplication": ($duplication | tonumber)
+                },
+                "issues": $issues
+              }
+            }')
+          
+          # Send to API with Github metadata
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+            -H "X-Github-Ref: $GITHUB_REF" \
+            -H "X-Github-SHA: $GITHUB_SHA" \
+            -d "$PAYLOAD" \
+            ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
 
   build-and-push-docker:
     name: Build and Push Docker Image
@@ -130,25 +370,92 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          format: 'sarif,json'
+          output: 'trivy-results.sarif,trivy-results.json'
           exit-code: '0'  # Change to '1' to make the pipeline fail on critical findings
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-          
-      # Generate Trivy scan summary
-      - name: Trivy Scan Summary
-        run: |
-          echo "## Docker Image Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
-          trivy image ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}} --format table --severity CRITICAL,HIGH >> $GITHUB_STEP_SUMMARY
           
       # Upload Trivy scan results to GitHub Security tab
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results.sarif'
-          category: 'container-vulnerability-scan'
+          category: container-scanning
           
-      - name: Push Docker Image
-        run: docker push ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}}
+      # Parse and send Trivy results
+      - name: Parse and send Trivy results
+        run: |
+          # Parse Trivy JSON report
+          REPORT_PATH="trivy-results.json"
+          if [ -f "$REPORT_PATH" ]; then
+            # Count vulnerabilities by severity
+            CRITICAL=$(jq '[.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL")] | length' $REPORT_PATH)
+            HIGH=$(jq '[.Results[].Vulnerabilities[] | select(.Severity == "HIGH")] | length' $REPORT_PATH)
+            MEDIUM=$(jq '[.Results[].Vulnerabilities[] | select(.Severity == "MEDIUM")] | length' $REPORT_PATH)
+            LOW=$(jq '[.Results[].Vulnerabilities[] | select(.Severity == "LOW")] | length' $REPORT_PATH)
+            
+            # Extract details for top vulnerabilities
+            DETAILS=$(jq '[.Results[].Vulnerabilities[] | {package: .PkgName, vulnerabilityId: .VulnerabilityID, severity: .Severity, installedVersion: .InstalledVersion, fixedVersion: .FixedVersion}] | sort_by(.severity) | reverse | .[0:10]' $REPORT_PATH)
+            
+            # Create payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              --argjson critical "${CRITICAL:-0}" \
+              --argjson high "${HIGH:-0}" \
+              --argjson medium "${MEDIUM:-0}" \
+              --argjson low "${LOW:-0}" \
+              --argjson details "$DETAILS" \
+              '{
+                "scanType": "trivy",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": $critical,
+                    "high": $high,
+                    "medium": $medium,
+                    "low": $low
+                  },
+                  "details": $details
+                }
+              }')
+            
+            # Send to API with Github metadata
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          else
+            echo "Trivy report not found"
+          fi
+          
+      # Push Docker image if all checks pass
+      - name: Push Docker image
+        run: |
+          docker push ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}}
+          
+          # Send deployment notification
+          PAYLOAD=$(jq -n \
+            --arg buildId "$GITHUB_RUN_ID" \
+            --arg image "${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}}" \
+            '{
+              "eventType": "deployment",
+              "buildId": $buildId,
+              "data": {
+                "image": $image,
+                "status": "success",
+                "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"
+              }
+            }')
+          
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+            -H "X-Github-Ref: $GITHUB_REF" \
+            -H "X-Github-SHA: $GITHUB_SHA" \
+            -d "$PAYLOAD" \
+            ${{ secrets.API_ENDPOINT }}/api/deployments/webhook

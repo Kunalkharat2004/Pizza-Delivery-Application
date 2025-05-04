@@ -46,23 +46,8 @@ jobs:
       # Parse dependency check results and send to API
       - name: Parse and send dependency check results
         run: |
-          # Reports directory seems to be at ./dependency-check based on the output
-          echo "Looking for dependency check report in various locations"
-          find . -name "dependency-check-report.json" -type f
-          
-          # Try the specific path first
+          # Parse the JSON report
           REPORT_PATH="reports/dependency-check/dependency-check-report.json"
-          if [ ! -f "$REPORT_PATH" ]; then
-            # Try alternative location based on the error output
-            REPORT_PATH="./dependency-check/dependency-check-report.json"
-            if [ ! -f "$REPORT_PATH" ]; then
-              # Try to find it anywhere
-              FOUND_REPORT=$(find . -name "dependency-check-report.json" -type f | head -n 1)
-              if [ -n "$FOUND_REPORT" ]; then
-                REPORT_PATH="$FOUND_REPORT"
-              fi
-            fi
-          fi
           
           # Check if file exists before processing
           if [ -f "$REPORT_PATH" ]; then
@@ -98,19 +83,19 @@ jobs:
                 }
               }')
             
-            # Send to API with Github metadata - Fixed the API endpoint URL by removing the extra slash
+            # Send to API with Github metadata
             curl -X POST \
               -H "Content-Type: application/json" \
               -H "X-Github-Repository: $GITHUB_REPOSITORY" \
               -H "X-Github-Ref: $GITHUB_REF" \
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
-              ${{ secrets.API_ENDPOINT }}api/security/webhook/scan-results
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
-            echo "Dependency check report not found. Searched in multiple locations."
+            echo "Dependency check report not found. Searching for it..."
+            find . -name "dependency-check-report.json" -type f
             echo "Current directory structure:"
-            ls -la ./
-            find . -type d -name "*dependency*" -o -name "*check*"
+            ls -la reports/ || echo "Reports directory not found"
           fi
       
       # Code security analysis with CodeQL
@@ -170,14 +155,14 @@ jobs:
                 }
               }')
             
-            # Send to API with Github metadata - Fixed the API endpoint URL by removing the extra slash
+            # Send to API with Github metadata
             curl -X POST \
               -H "Content-Type: application/json" \
               -H "X-Github-Repository: $GITHUB_REPOSITORY" \
               -H "X-Github-Ref: $GITHUB_REF" \
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
-              ${{ secrets.API_ENDPOINT }}api/security/webhook/scan-results
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "CodeQL SARIF file not found"
           fi
@@ -190,7 +175,6 @@ jobs:
           extra_args: --debug --only-verified
           format: json
           output: trufflehog-results.json
-        continue-on-error: true  # Continue even if TruffleHog fails
           
       # Parse and send TruffleHog results
       - name: Parse and send TruffleHog results
@@ -223,20 +207,18 @@ jobs:
                 }
               }')
             
-            # Send to API with Github metadata - Fixed the API endpoint URL by removing the extra slash
+            # Send to API with Github metadata
             curl -X POST \
               -H "Content-Type: application/json" \
               -H "X-Github-Repository: $GITHUB_REPOSITORY" \
               -H "X-Github-Ref: $GITHUB_REF" \
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
-              ${{ secrets.API_ENDPOINT }}api/security/webhook/scan-results
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "TruffleHog report not found"
-            echo "Current directory contents:"
-            ls -la
             # Try to find the report by searching
-            find . -name "*trufflehog*" -o -name "*secret*" -type f || echo "Could not find any TruffleHog-related files anywhere"
+            find . -name "trufflehog-results.json" -type f || echo "Could not find trufflehog-results.json anywhere"
           fi
           
   build-and-test:
@@ -304,14 +286,14 @@ jobs:
                 }
               }')
             
-            # Send to API with Github metadata - Fixed the API endpoint URL by removing the extra slash
+            # Send to API with Github metadata
             curl -X POST \
               -H "Content-Type: application/json" \
               -H "X-Github-Repository: $GITHUB_REPOSITORY" \
               -H "X-Github-Ref: $GITHUB_REF" \
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
-              ${{ secrets.API_ENDPOINT }}api/security/webhook/scan-results
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "Coverage report not found"
             echo "Searching for coverage files:"
@@ -385,7 +367,7 @@ jobs:
               -H "X-Github-Ref: $GITHUB_REF" \
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
-              ${{ secrets.API_ENDPOINT }}api/security/webhook/scan-results
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "sonar-project.properties file not found"
           fi
@@ -477,7 +459,7 @@ jobs:
               -H "X-Github-Ref: $GITHUB_REF" \
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
-              ${{ secrets.API_ENDPOINT }}api/security/webhook/scan-results
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "Trivy report not found"
             find . -name "trivy-results.json" -type f || echo "Could not find trivy-results.json anywhere"
@@ -508,4 +490,4 @@ jobs:
             -H "X-Github-Ref: $GITHUB_REF" \
             -H "X-Github-SHA: $GITHUB_SHA" \
             -d "$PAYLOAD" \
-            ${{ secrets.API_ENDPOINT }}api/deployments/webhook
+            ${{ secrets.API_ENDPOINT }}/api/deployments/webhook

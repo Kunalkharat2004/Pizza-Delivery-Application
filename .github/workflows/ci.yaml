@@ -48,7 +48,10 @@ jobs:
         run: |
           # Parse the JSON report
           REPORT_PATH="reports/dependency-check/dependency-check-report.json"
+          
+          # Check if file exists before processing
           if [ -f "$REPORT_PATH" ]; then
+            echo "Found dependency check report at $REPORT_PATH"
             # Count vulnerabilities by severity
             CRITICAL=$(jq '.dependencies | map(.vulnerabilities? // []) | flatten | map(select(.severity == "CRITICAL")) | length' $REPORT_PATH)
             HIGH=$(jq '.dependencies | map(.vulnerabilities? // []) | flatten | map(select(.severity == "HIGH")) | length' $REPORT_PATH)
@@ -89,7 +92,10 @@ jobs:
               -d "$PAYLOAD" \
               ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
-            echo "Dependency check report not found"
+            echo "Dependency check report not found. Searching for it..."
+            find . -name "dependency-check-report.json" -type f
+            echo "Current directory structure:"
+            ls -la reports/ || echo "Reports directory not found"
           fi
       
       # Code security analysis with CodeQL
@@ -100,13 +106,24 @@ jobs:
           
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:javascript"
+          output: sarif-results
         
       # Parse and send CodeQL results
       - name: Parse and send CodeQL results
         run: |
           # Look for SARIF file
-          SARIF_PATH=$(find ${{ github.workspace }}/results -name '*.sarif' -type f | head -n 1)
+          echo "Looking for SARIF files in sarif-results directory"
+          find sarif-results -type f -name "*.sarif" || echo "No SARIF files found in sarif-results"
+          
+          # Try to find SARIF files anywhere in the workspace
+          echo "Looking for SARIF files anywhere in the workspace"
+          find ${{ github.workspace }} -name "*.sarif" -type f || echo "No SARIF files found in workspace"
+          
+          SARIF_PATH=$(find ${{ github.workspace }} -name "*.sarif" -type f | head -n 1)
           if [ -n "$SARIF_PATH" ]; then
+            echo "Found SARIF file at $SARIF_PATH"
             # Parse the SARIF file
             CRITICAL=$(jq '[.runs[].results[] | select(.level == "error")] | length' $SARIF_PATH)
             HIGH=$(jq '[.runs[].results[] | select(.level == "warning")] | length' $SARIF_PATH)
@@ -164,7 +181,10 @@ jobs:
         run: |
           # Check if results file exists
           REPORT_PATH="trufflehog-results.json"
+          echo "Looking for TruffleHog results at $REPORT_PATH"
+          
           if [ -f "$REPORT_PATH" ]; then
+            echo "Found TruffleHog report at $REPORT_PATH"
             # Count findings by severity (TruffleHog doesn't use severity levels, so count by type)
             TOTAL_SECRETS=$(jq '. | length' $REPORT_PATH)
             
@@ -197,6 +217,8 @@ jobs:
               ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "TruffleHog report not found"
+            # Try to find the report by searching
+            find . -name "trufflehog-results.json" -type f || echo "Could not find trufflehog-results.json anywhere"
           fi
           
   build-and-test:
@@ -237,6 +259,7 @@ jobs:
         run: |
           # Check if coverage report exists
           if [ -f "coverage/coverage-summary.json" ]; then
+            echo "Found coverage report at coverage/coverage-summary.json"
             # Parse coverage data
             COVERAGE=$(jq '.total.lines.pct' coverage/coverage-summary.json)
             STATEMENTS=$(jq '.total.statements.pct' coverage/coverage-summary.json)
@@ -273,6 +296,8 @@ jobs:
               ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "Coverage report not found"
+            echo "Searching for coverage files:"
+            find . -path "*/coverage/*" -type f | grep -E "\.json$" || echo "No coverage JSON files found"
           fi
           
       - name: Build-ts
@@ -291,56 +316,61 @@ jobs:
           sleep 10
           
           # Get SonarQube project key from sonar-project.properties
-          SONAR_PROJECT_KEY=$(grep "sonar.projectKey" sonar-project.properties | cut -d'=' -f2)
-          
-          # Get metrics from SonarQube API
-          SONAR_METRICS=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "${{ secrets.SONARQUBE_URL }}/api/measures/component?component=${SONAR_PROJECT_KEY}&metricKeys=bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density")
-          
-          # Parse metrics
-          BUGS=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "bugs") | .value' -r)
-          VULNERABILITIES=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "vulnerabilities") | .value' -r)
-          CODE_SMELLS=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "code_smells") | .value' -r)
-          COVERAGE=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "coverage") | .value' -r)
-          DUPLICATION=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "duplicated_lines_density") | .value' -r)
-          
-          # Get issues from SonarQube API
-          SONAR_ISSUES=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "${{ secrets.SONARQUBE_URL }}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&severities=BLOCKER,CRITICAL,MAJOR&ps=10")
-          
-          # Format issues
-          ISSUES=$(echo $SONAR_ISSUES | jq '[.issues[] | {issue: .message, type: .type, severity: .severity, file: .component}]')
-          
-          # Create payload
-          PAYLOAD=$(jq -n \
-            --arg buildId "$GITHUB_RUN_ID" \
-            --arg bugs "${BUGS:-0}" \
-            --arg vulnerabilities "${VULNERABILITIES:-0}" \
-            --arg codeSmells "${CODE_SMELLS:-0}" \
-            --arg coverage "${COVERAGE:-0}" \
-            --arg duplication "${DUPLICATION:-0}" \
-            --argjson issues "$ISSUES" \
-            '{
-              "scanType": "sonarqube",
-              "buildId": $buildId,
-              "data": {
-                "metrics": {
-                  "bugs": ($bugs | tonumber),
-                  "vulnerabilities": ($vulnerabilities | tonumber),
-                  "codeSmells": ($codeSmells | tonumber),
-                  "coverage": ($coverage | tonumber),
-                  "duplication": ($duplication | tonumber)
-                },
-                "issues": $issues
-              }
-            }')
-          
-          # Send to API with Github metadata
-          curl -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-Github-Repository: $GITHUB_REPOSITORY" \
-            -H "X-Github-Ref: $GITHUB_REF" \
-            -H "X-Github-SHA: $GITHUB_SHA" \
-            -d "$PAYLOAD" \
-            ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          if [ -f "sonar-project.properties" ]; then
+            SONAR_PROJECT_KEY=$(grep "sonar.projectKey" sonar-project.properties | cut -d'=' -f2)
+            echo "Found SonarQube project key: $SONAR_PROJECT_KEY"
+            
+            # Get metrics from SonarQube API
+            SONAR_METRICS=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "${{ secrets.SONARQUBE_URL }}/api/measures/component?component=${SONAR_PROJECT_KEY}&metricKeys=bugs,vulnerabilities,code_smells,coverage,duplicated_lines_density")
+            
+            # Parse metrics
+            BUGS=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "bugs") | .value' -r || echo "0")
+            VULNERABILITIES=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "vulnerabilities") | .value' -r || echo "0")
+            CODE_SMELLS=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "code_smells") | .value' -r || echo "0")
+            COVERAGE=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "coverage") | .value' -r || echo "0")
+            DUPLICATION=$(echo $SONAR_METRICS | jq '.component.measures[] | select(.metric == "duplicated_lines_density") | .value' -r || echo "0")
+            
+            # Get issues from SonarQube API
+            SONAR_ISSUES=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: "${{ secrets.SONARQUBE_URL }}/api/issues/search?componentKeys=${SONAR_PROJECT_KEY}&severities=BLOCKER,CRITICAL,MAJOR&ps=10")
+            
+            # Format issues
+            ISSUES=$(echo $SONAR_ISSUES | jq '[.issues[] | {issue: .message, type: .type, severity: .severity, file: .component}]')
+            
+            # Create payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              --arg bugs "${BUGS:-0}" \
+              --arg vulnerabilities "${VULNERABILITIES:-0}" \
+              --arg codeSmells "${CODE_SMELLS:-0}" \
+              --arg coverage "${COVERAGE:-0}" \
+              --arg duplication "${DUPLICATION:-0}" \
+              --argjson issues "$ISSUES" \
+              '{
+                "scanType": "sonarqube",
+                "buildId": $buildId,
+                "data": {
+                  "metrics": {
+                    "bugs": ($bugs | tonumber),
+                    "vulnerabilities": ($vulnerabilities | tonumber),
+                    "codeSmells": ($codeSmells | tonumber),
+                    "coverage": ($coverage | tonumber),
+                    "duplication": ($duplication | tonumber)
+                  },
+                  "issues": $issues
+                }
+              }')
+            
+            # Send to API with Github metadata
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
+          else
+            echo "sonar-project.properties file not found"
+          fi
 
   build-and-push-docker:
     name: Build and Push Docker Image
@@ -390,6 +420,7 @@ jobs:
           # Parse Trivy JSON report
           REPORT_PATH="trivy-results.json"
           if [ -f "$REPORT_PATH" ]; then
+            echo "Found Trivy report at $REPORT_PATH"
             # Count vulnerabilities by severity
             CRITICAL=$(jq '[.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL")] | length' $REPORT_PATH)
             HIGH=$(jq '[.Results[].Vulnerabilities[] | select(.Severity == "HIGH")] | length' $REPORT_PATH)
@@ -431,6 +462,7 @@ jobs:
               ${{ secrets.API_ENDPOINT }}/api/security/webhook/scan-results
           else
             echo "Trivy report not found"
+            find . -name "trivy-results.json" -type f || echo "Could not find trivy-results.json anywhere"
           fi
           
       # Push Docker image if all checks pass

@@ -9,6 +9,8 @@ import cors from "cors";
 import config from "./config/config";
 import { requestLogger } from "./middlewares/requestLogger";
 
+// This comment is just for testing the CI pipeline - #4
+
 const app = express();
 
 app.use(

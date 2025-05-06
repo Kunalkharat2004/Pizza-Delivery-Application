@@ -691,3 +691,30 @@ jobs:
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
+          else
+            echo "Trivy report not found at $REPORT_PATH, sending empty results"
+            # Create empty results payload
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              '{
+                "scanType": "trivy",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 0,
+                    "low": 0
+                  },
+                  "details": []
+                }
+              }')
+              
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              "${API_ENDPOINT}api/security/webhook/scan-results"
+          fi

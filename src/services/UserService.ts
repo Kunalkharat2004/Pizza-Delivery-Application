@@ -59,8 +59,8 @@ export class UserService {
     }
     return await queryBuilder
       .leftJoinAndSelect("user.tenant", "tenant")
-      .skip((validateQuery.currentPage - 1) * validateQuery.perPage)
-      .take(validateQuery.perPage)
+      .skip((validateQuery.page - 1) * validateQuery.limit)
+      .take(validateQuery.limit)
       .getManyAndCount();
   }
 

@@ -39,8 +39,8 @@ export class TenantController {
       res.status(200).json({
         data: tenants,
         total: count,
-        currentPage: validateQuery.currentPage as number,
-        perPage: validateQuery.perPage as number,
+        currentPage: validateQuery.page as number,
+        perPage: validateQuery.limit as number,
       });
     } catch (err) {
       next(err);

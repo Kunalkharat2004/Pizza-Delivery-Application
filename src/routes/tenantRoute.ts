@@ -28,7 +28,7 @@ router.post(
 );
 
 // List of all tenants
-router.get("/", authenticate, queryParam, validateRequest, (req: Request, res: Response, next: NextFunction) =>
+router.get("/", queryParam, validateRequest, (req: Request, res: Response, next: NextFunction) =>
   tenantController.listTenant(req, res, next)
 );
 

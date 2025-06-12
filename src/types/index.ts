@@ -50,14 +50,14 @@ export interface ITenant {
 }
 
 export interface UserQueryParams {
-  currentPage: number;
-  perPage: number;
+  page: number;
+  limit: number;
   q: string;
   role: string;
 }
 
 export interface TenantQueryParams {
-  currentPage: number;
-  perPage: number;
+  page: number;
+  limit: number;
   q: string;
 }

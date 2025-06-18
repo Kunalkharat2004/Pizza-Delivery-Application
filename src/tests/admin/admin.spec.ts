@@ -35,7 +35,7 @@ describe("Admin Creation", () => {
 
     const userRepo = connection.getRepository(User);
     const admin = await userRepo.find({ where: { role: Roles.ADMIN },
-    select:["address","email","password","firstName","lastName"] });
+    select:["email","password","firstName","lastName"] });
     expect(admin).toHaveLength(1);
 
     expect(admin[0].password).not.toBe("SecureAdminPassword123!");
@@ -49,7 +49,6 @@ describe("Admin Creation", () => {
             lastName: "User",
             email: "admin@gmail.com",
             password: "SecureAdminPassword123!",
-            address: "Default Admin Address",
             role: Roles.ADMIN,
     });
     await userRepo.save(adminUser);

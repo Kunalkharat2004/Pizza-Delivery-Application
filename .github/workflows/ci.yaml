@@ -34,7 +34,6 @@ jobs:
           ADMIN_PASSWORD: ${{secrets.TEST_ADMIN_PASSWORD}}
           ADMIN_FIRSTNAME: ${{secrets.TEST_ADMIN_FIRSTNAME}}
           ADMIN_LASTNAME: ${{secrets.TEST_ADMIN_LASTNAME}}
-          ADMIN_ADDRESS: ${{secrets.TEST_ADMINADDRESS}}
       - name: Build-ts
         run: npm run build
       - name: Sonar Qube Scan

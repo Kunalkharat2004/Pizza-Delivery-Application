@@ -17,7 +17,6 @@ describe("GET /auth/refresh", () => {
     lastName: "Kharat",
     email: "kunalkharat@gmail.com",
     password: "Secret@123",
-    address: "Pune, India",
   };
 
   beforeAll(async () => {

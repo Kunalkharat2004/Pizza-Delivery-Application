@@ -15,7 +15,6 @@ describe("POST /auth/logout", () => {
     lastName: "Kharat",
     email: "kunalkharat@gmail.com",
     password: "Secret@123",
-    address: "Pune, India",
   };
 
   let jwksMock: JWKSMock;

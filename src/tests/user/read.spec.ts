@@ -20,7 +20,6 @@ describe("GET /users", () => {
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
-    address: "Bangalore, India",
     role: Roles.MANAGER,
     tenantId: null,
   };
@@ -30,7 +29,6 @@ describe("GET /users", () => {
     lastName: "Doe",
     email: "john@gmail.com",
     password: "John$123",
-    address: "Mumbai, India",
     role: Roles.CUSTOMER,
     tenantId: null,
   };

@@ -1,4 +1,3 @@
- 
 import { checkSchema } from "express-validator";
 import { Roles } from "../constants";
 
@@ -69,16 +68,6 @@ const validateUserUpdateCredentials = checkSchema({
   role: {
     notEmpty: {
       errorMessage: "Role is required",
-    },
-    trim: true,
-  },
-
-  address: {
-    notEmpty: {
-      errorMessage: "Address is required!",
-    },
-    isString: {
-      errorMessage: "Address must be a string",
     },
     trim: true,
   },

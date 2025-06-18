@@ -11,8 +11,7 @@ describe("POST /auth/login", () => {
     firstName: "Kunal",
     lastName: "Kharat",
     email: "kunalkharat@gmail.com",
-    password: "Secret@123",
-    address: "Pune, India",
+    password: "Secret@123"
   };
 
   beforeAll(async () => {

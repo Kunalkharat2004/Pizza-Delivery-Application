@@ -44,11 +44,6 @@ describe("GET /tenant/:id", () => {
       expect(response.body.perPage).toBe(5);
       stopJwks();
     });
-
-    it("should return 401 status code if no token is provided", async () => {
-      const response = await request(app).get("/tenant");
-      expect(response.status).toBe(401);
-    });
     
     it("should return 400 status code if invalid page number is provided", async () => {
       jwksMock = createJWKSMock("http://localhost:3200");

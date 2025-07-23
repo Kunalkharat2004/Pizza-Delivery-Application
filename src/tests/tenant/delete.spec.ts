@@ -129,7 +129,6 @@ describe("DELETE /tenant/:id", () => {
         password: "Password$123",
         role: Roles.MANAGER,
         tenant: { id: tenantId },
-        address: "Pune, India",
       });
       const manager2 = userRepository.create({
         firstName: "Manager2",
@@ -138,7 +137,6 @@ describe("DELETE /tenant/:id", () => {
         password: "Password$123",
         role: Roles.MANAGER,
         tenant: { id: tenantId },
-        address: "Pune, India",
       });
       await userRepository.save([manager1, manager2]);
 

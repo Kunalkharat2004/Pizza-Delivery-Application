@@ -19,9 +19,6 @@ export class User {
   @Column({ select: false })
   password: string;
 
-  @Column()
-  address: string;
-
   @Column({
     type: "enum",
     enum: Roles,

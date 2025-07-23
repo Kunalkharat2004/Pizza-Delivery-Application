@@ -17,7 +17,6 @@ describe("POST /users", () => {
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
-    address: "Bangalore, India",
     tenantId: null,
     role: Roles.MANAGER,
   };
@@ -199,29 +198,6 @@ describe("POST /users", () => {
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
         .send({ ...managerData, lastName: "", tenantId: tenant.id });
-
-      const users = await connection.getRepository(User).find();
-      // Assert
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty("errors");
-      expect(users).toHaveLength(0);
-
-      (response.body as AuthResponse).errors.forEach((error: { msg: string }) => {
-        expect(error).toHaveProperty("msg");
-        expect(error.msg).toBeDefined();
-      });
-    });
-    it("should return 400 statusCode if address is missing", async () => {
-      const adminToken = jwksMock.token({
-        sub: "123",
-        role: Roles.ADMIN,
-      });
-
-      // Act
-      const response = await request(app)
-        .post("/users")
-        .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, address: "", tenantId: tenant.id });
 
       const users = await connection.getRepository(User).find();
       // Assert

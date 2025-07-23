@@ -8,10 +8,10 @@ import { Roles } from "../constants";
 export class UserService {
   constructor(private readonly userRepository: Repository<User>) {}
 
-  async createUser({ firstName, lastName, email, password, address, role, tenantId }: IUser): Promise<User> {
+  async createUser({ firstName, lastName, email, password, role, tenantId }: IUser): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { email: email },
-      select: ["id", "firstName", "lastName", "email", "password", "address", "role"],
+      select: ["id", "firstName", "lastName", "email", "password", "role"],
     });
 
     if (user) {
@@ -30,7 +30,6 @@ export class UserService {
         lastName,
         email,
         password: hashedPassword,
-        address,
         role,
         tenant: tenantId ? { id: tenantId } : undefined,
       });
@@ -54,20 +53,21 @@ export class UserService {
         })
       );
     }
+
     if (validateQuery.role) {
       queryBuilder.andWhere("user.role = :role", { role: validateQuery.role });
     }
     return await queryBuilder
       .leftJoinAndSelect("user.tenant", "tenant")
-      .skip((validateQuery.currentPage - 1) * validateQuery.perPage)
-      .take(validateQuery.perPage)
+      .skip((validateQuery.page - 1) * validateQuery.limit)
+      .take(validateQuery.limit)
       .getManyAndCount();
   }
 
   async checkUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { email: email },
-      select: ["id", "firstName", "lastName", "email", "password", "address", "role"],
+      select: ["id", "firstName", "lastName", "email", "password", "role"],
       relations: {
         tenant: true,
       },
@@ -88,7 +88,7 @@ export class UserService {
   async getUserById(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ["id", "firstName", "lastName", "email", "address", "role"],
+      select: ["id", "firstName", "lastName", "email", "role"],
       relations: {
         tenant: true,
       },
@@ -102,7 +102,7 @@ export class UserService {
     return user;
   }
 
-  async updateUser({ id, firstName, lastName, email, password, address, role, tenantId }: IUser) {
+  async updateUser({ id, firstName, lastName, email, password, role, tenantId }: IUser) {
     // if the role of user is customer then tenantId should set to null
     try {
       if (role === Roles.CUSTOMER || role === Roles.ADMIN) {
@@ -112,7 +112,6 @@ export class UserService {
         firstName,
         lastName,
         email,
-        address,
         role,
         tenant: tenantId ? { id: tenantId } : null,
       });

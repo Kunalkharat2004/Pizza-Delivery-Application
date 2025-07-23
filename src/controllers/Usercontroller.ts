@@ -15,7 +15,7 @@ export class UserController {
   ) {}
   async create(req: RegisterRequest, res: Response, next: NextFunction) {
     try {
-      const { firstName, lastName, email, password, address, tenantId, role }: IUser = req.body;
+      const { firstName, lastName, email, password, tenantId, role }: IUser = req.body;
 
       this.logger.debug(`Userdata:}`, {
         firstName,
@@ -23,7 +23,6 @@ export class UserController {
         email,
         password: "********",
         role,
-        address: "********",
       });
 
       const user = await this.userService.createUser({
@@ -31,7 +30,6 @@ export class UserController {
         lastName,
         email,
         password,
-        address,
         tenantId,
         role,
       });
@@ -54,8 +52,8 @@ export class UserController {
       res.json({
         data: users,
         total: count,
-        currentPage: validateQuery.currentPage as number,
-        perPage: validateQuery.perPage as number,
+        // currentPage: validateQuery.currentPage as number,
+        // perPage: validateQuery.perPage as number,
       });
     } catch (err) {
       next(err);
@@ -78,7 +76,7 @@ export class UserController {
     try {
       const userId = req.params.id;
 
-      const { firstName, lastName, email, address, role, tenantId } = req.body;
+      const { firstName, lastName, email, role, tenantId } = req.body;
 
       const user = await this.userService.getUserById(userId);
       if (!user) {
@@ -91,7 +89,6 @@ export class UserController {
         firstName,
         lastName,
         email,
-        address,
         password: user.password,
         role,
         tenantId,

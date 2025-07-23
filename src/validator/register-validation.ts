@@ -64,16 +64,6 @@ const validateUserCredentials = checkSchema({
       },
     },
   },
-
-  address: {
-    notEmpty: {
-      errorMessage: "Address is required!",
-    },
-    isString: {
-      errorMessage: "Address must be a string",
-    },
-    trim: true,
-  },
 });
 
 export default validateUserCredentials;

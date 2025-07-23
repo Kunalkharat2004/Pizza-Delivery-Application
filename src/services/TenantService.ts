@@ -31,8 +31,8 @@ export class TenantService {
         .orWhere("tenant.address ILIKE :searchQuery", { searchQuery });
     }
     return await queryBuilder
-      .skip((validateQuery.currentPage - 1) * validateQuery.perPage)
-      .take(validateQuery.perPage)
+      .skip((validateQuery.page - 1) * validateQuery.limit)
+      .take(validateQuery.limit)
       .orderBy("tenant.createdAt", "DESC")
       .getManyAndCount();
   }

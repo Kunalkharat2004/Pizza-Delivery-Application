@@ -21,7 +21,6 @@ describe("DELETE /users/:id", () => {
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
-    address: "Bangalore, India",
     role: Roles.MANAGER,
     tenantId: null,
   };

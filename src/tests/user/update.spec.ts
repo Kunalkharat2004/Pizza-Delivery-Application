@@ -20,7 +20,6 @@ describe("patch /users/:id", () => {
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
-    address: "Bangalore, India",
     role: Roles.MANAGER,
     tenantId: null,
   };
@@ -55,7 +54,7 @@ describe("patch /users/:id", () => {
       // Act
       const response1 = await request(app)
         .patch(`/users/${userId}`)
-        .send({ ...managerData, firstName: "Rajesh", address: "Pune, India" });
+        .send({ ...managerData, firstName: "Rajesh"});
       // Assert
       expect(response1.statusCode).toBe(401);
       stopJwks();
@@ -98,7 +97,7 @@ describe("patch /users/:id", () => {
       const response1 = await request(app)
         .patch(`/users/${userId}`)
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...managerData, firstName: "Rajesh", address: "Pune, India", tenantId: tenant.id });
+        .send({ ...managerData, firstName: "Rajesh", tenantId: tenant.id });
       // Assert
       expect(response1.statusCode).toBe(200);
       stopJwks();

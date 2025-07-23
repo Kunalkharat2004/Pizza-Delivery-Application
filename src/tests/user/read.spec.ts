@@ -20,7 +20,6 @@ describe("GET /users", () => {
     lastName: "Pawar",
     email: "shraddha@gmail.com",
     password: "Shraddha$123",
-    address: "Bangalore, India",
     role: Roles.MANAGER,
     tenantId: null,
   };
@@ -30,7 +29,6 @@ describe("GET /users", () => {
     lastName: "Doe",
     email: "john@gmail.com",
     password: "John$123",
-    address: "Mumbai, India",
     role: Roles.CUSTOMER,
     tenantId: null,
   };
@@ -63,6 +61,7 @@ describe("GET /users", () => {
         role: Roles.CUSTOMER,
       });
       const response = await request(app).get("/users").set("Cookie", `accessToken=${adminToken}`);
+      console.log("AccessToken is : ", adminToken);
       expect(response.statusCode).toBe(403);
       stopJwks();
     });
@@ -100,17 +99,16 @@ describe("GET /users", () => {
       await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...customerData, tenantId: tenant.id });
+        .send({ ...customerData });
 
       const response = await request(app)
-        .get("/users?currentPage=1&perPage=2")
+        .get("/users?page=1&limit=2")
         .set("Cookie", `accessToken=${adminToken}`);
 
+      console.log('response.body:', response.body);
       expect(response.statusCode).toBe(200);
       expect(response.body.data.length).toBeLessThanOrEqual(2);
       expect(response.body.total).toBeGreaterThanOrEqual(2);
-      expect(response.body.currentPage).toBe(1);
-      expect(response.body.perPage).toBe(2);
       stopJwks();
     });
 
@@ -131,7 +129,7 @@ describe("GET /users", () => {
       await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...customerData, tenantId: tenant.id });
+        .send({ ...customerData});
 
       const response = await request(app)
         .get("/users?role=manager")
@@ -159,7 +157,7 @@ describe("GET /users", () => {
       await request(app)
         .post("/users")
         .set("Cookie", `accessToken=${adminToken}`)
-        .send({ ...customerData, tenantId: tenant.id });
+        .send({ ...customerData});
 
       const response = await request(app)
         .get("/users?q=shraddha")

@@ -15,7 +15,6 @@ describe("POST /users/register", () => {
     lastName: "Doe",
     email: "johndoe@gmail.com",
     password: "Secret@123",
-    address: "Sans Francisco",
   };
 
   beforeAll(async () => {
@@ -53,7 +52,6 @@ describe("POST /users/register", () => {
       expect(users[0].firstName).toBe(user.firstName);
       expect(users[0].lastName).toBe(user.lastName);
       expect(users[0].email).toBe(user.email);
-      expect(users[0].address).toBe(user.address);
     });
 
     it("should return the id of the user", async () => {
@@ -188,18 +186,6 @@ describe("POST /users/register", () => {
       const response = await request(app)
         .post("/auth/register")
         .send({ ...user, lastName: "" });
-
-      const users = await connection.getRepository(User).find();
-      // Assert
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty("errors");
-      expect(users).toHaveLength(0);
-    });
-    it("should return 400 statusCode if address is missing", async () => {
-      // Act
-      const response = await request(app)
-        .post("/auth/register")
-        .send({ ...user, address: "" });
 
       const users = await connection.getRepository(User).find();
       // Assert

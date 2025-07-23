@@ -2,7 +2,7 @@ import { checkSchema } from "express-validator";
 
 const queryParam = checkSchema(
   {
-    currentPage: {
+    page: {
       customSanitizer: {
         options: (value) => {
           const page = Number(value);
@@ -10,11 +10,11 @@ const queryParam = checkSchema(
         },
       },
     },
-    perPage: {
+    limit: {
       customSanitizer: {
         options: (value) => {
-          const perPage = Number(value);
-          return perPage < 1 ? 5 : isNaN(perPage) ? 5 : perPage;
+          const limit = Number(value);
+          return limit < 1 ? 5 : isNaN(limit) ? 5 : limit;
         },
       },
     },

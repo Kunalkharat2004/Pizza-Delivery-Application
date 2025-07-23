@@ -35,7 +35,7 @@ export class AuthController {
   }
 
   async register(req: RegisterRequest, res: Response, next: NextFunction) {
-    const { firstName, lastName, email, password, address } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     this.logger.debug(`Userdata:}`, {
       firstName,
@@ -48,7 +48,6 @@ export class AuthController {
         lastName,
         email,
         password,
-        address,
         role: Roles.CUSTOMER,
       });
 
@@ -56,6 +55,9 @@ export class AuthController {
 
       const payload: JwtPayload = {
         sub: String(user.id),
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         role: user.role,
       };
 
@@ -95,6 +97,9 @@ export class AuthController {
       const payload: JwtPayload = {
         sub: user.id,
         role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         tenantId: user.tenant ? user.tenant.id : null,
       };
 
@@ -126,6 +131,9 @@ export class AuthController {
   async refresh(req: AuthRequest, res: Response) {
     const payload: JwtPayload = {
       sub: req.auth.sub,
+      firstName: req.auth.firstName,
+      lastName: req.auth.lastName,
+      email: req.auth.email,
       role: req.auth.role,
       tenantId: req.auth.tenantId,
     };

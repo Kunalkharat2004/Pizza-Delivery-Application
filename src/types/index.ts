@@ -1,4 +1,5 @@
 import { Request } from "express";
+import { JwtPayload } from "jsonwebtoken";
 
 export interface IUser {
   id?: string;
@@ -6,7 +7,6 @@ export interface IUser {
   lastName: string;
   email: string;
   password: string;
-  address: string;
   role: string;
   tenantId?: string | null;
 }
@@ -31,6 +31,9 @@ export interface AuthRequest extends Request {
     role: string;
     jti: string;
     tenantId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
   };
 }
 
@@ -50,14 +53,14 @@ export interface ITenant {
 }
 
 export interface UserQueryParams {
-  currentPage: number;
-  perPage: number;
+  page: number;
+  limit: number;
   q: string;
   role: string;
 }
 
 export interface TenantQueryParams {
-  currentPage: number;
-  perPage: number;
+  page: number;
+  limit: number;
   q: string;
 }

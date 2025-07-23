@@ -8,6 +8,7 @@ import { RefreshToken } from "../entity/RefreshToken";
 import TokenService from "../services/TokenService";
 import { Repository } from "typeorm";
 import createHttpError from "http-errors";
+import config from "../config/config";
 
 export class AuthController {
   constructor(
@@ -19,14 +20,14 @@ export class AuthController {
 
   setCookies(res: Response, accessToken: string, refreshToken: string) {
     res.cookie("accessToken", accessToken, {
-      domain: "localhost",
+      domain: config.MAIN_DOMAIN,
       httpOnly: true,
       secure: true,
       sameSite: "strict",
       maxAge: 1000 * 60 * 60, // 1 hour
     });
     res.cookie("refreshToken", refreshToken, {
-      domain: "localhost",
+      domain: config.MAIN_DOMAIN,
       httpOnly: true,
       secure: true,
       sameSite: "strict",

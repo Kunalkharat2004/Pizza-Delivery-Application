@@ -1,17 +1,47 @@
-# Stage-1: Build the application
-FROM node:22.11.0-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+# syntax=docker/dockerfile:1
+
+ARG NODE_VERSION=22.17.1
+
+FROM node:${NODE_VERSION}-alpine as builder
+
+
+WORKDIR /home/node/app
+
+
+RUN --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm ci
+
+
 COPY . .
+
+
 RUN npm run build
 
-# Stage-2: Create the production image
-FROM node:22.11.0-alpine AS production
-WORKDIR /app
+
+FROM node:${NODE_VERSION}-alpine as runner
+
+USER node
+
+RUN mkdir -p /home/node/app
+
+WORKDIR /home/node/app
+
 ENV NODE_ENV=production
-COPY package*.json ./
-RUN npm ci --only=production --ignore-scripts
-COPY --from=builder /app/dist ./
-EXPOSE 3200
+
+RUN --mount=type=bind,source=package.json,target=package.json \
+    --mount=type=bind,source=package-lock.json,target=package-lock.json \
+    --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev --ignore-scripts
+
+
+COPY --from=builder --chown=node:node /home/node/app/dist ./
+
+EXPOSE 5501
+
+
+
 CMD ["node", "src/server.js"]
+
+

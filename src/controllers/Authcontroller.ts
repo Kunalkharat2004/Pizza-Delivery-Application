@@ -131,6 +131,9 @@ export class AuthController {
   async refresh(req: AuthRequest, res: Response) {
     const payload: JwtPayload = {
       sub: req.auth.sub,
+      firstName: req.auth.firstName,
+      lastName: req.auth.lastName,
+      email: req.auth.email,
       role: req.auth.role,
       tenantId: req.auth.tenantId,
     };

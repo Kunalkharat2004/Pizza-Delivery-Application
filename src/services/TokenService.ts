@@ -17,7 +17,7 @@ export default class TokenService {
 
     const accessToken = jwt.sign(payload, privateKey, {
       algorithm: "RS256",
-      expiresIn: "1hr", // 1 hour
+      expiresIn: "1h", // 1 hour
       issuer: "auth-service",
     });
 

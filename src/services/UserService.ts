@@ -53,6 +53,7 @@ export class UserService {
         })
       );
     }
+
     if (validateQuery.role) {
       queryBuilder.andWhere("user.role = :role", { role: validateQuery.role });
     }

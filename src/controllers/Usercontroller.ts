@@ -52,8 +52,8 @@ export class UserController {
       res.json({
         data: users,
         total: count,
-        currentPage: validateQuery.currentPage as number,
-        perPage: validateQuery.perPage as number,
+        // currentPage: validateQuery.currentPage as number,
+        // perPage: validateQuery.perPage as number,
       });
     } catch (err) {
       next(err);

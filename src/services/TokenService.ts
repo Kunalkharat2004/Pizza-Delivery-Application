@@ -1,4 +1,6 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
+import fs from "fs";
+import path from "path";
 import { RefreshToken } from "../entity/RefreshToken";
 import { User } from "../entity/User";
 import config from "../config/config";
@@ -7,14 +9,15 @@ import createHttpError from "http-errors";
 
 export default class TokenService {
   generateAccessToken(payload: JwtPayload) {
-    const privateKey: string | undefined = config.PRIVATE_KEY;
+    // const privateKey: string | undefined = config.PRIVATE_KEY;
+    let privateKey: Buffer;
     // console.log("privateKey", privateKey);
-
-    if (privateKey === undefined) {
-      const error = createHttpError(500, "Private key not found");
+    try {
+      privateKey = fs.readFileSync(path.join(__dirname, "../../certs/private.pem"));
+    } catch (err) {
+      const error = createHttpError(500, "Private key is not defined");
       throw error;
     }
-
     const accessToken = jwt.sign(payload, privateKey, {
       algorithm: "RS256",
       expiresIn: "1h", // 1 hour

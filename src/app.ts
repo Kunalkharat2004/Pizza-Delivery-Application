@@ -27,7 +27,7 @@ app.use(cookieParser());
 app.use(requestLogger);
 app.get("/", (req: Request, res: Response) => {
   res.json({
-    message: "Hello SnowBell, This message is coming from the server",
+    message: "Hello SnowBell, This message is coming from the K8s server",
   });
 });
 

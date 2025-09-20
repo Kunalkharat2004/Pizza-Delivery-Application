@@ -180,19 +180,9 @@ jobs:
               "${API_ENDPOINT}api/security/webhook/scan-results"
           fi
 
+      fi
       - name: Push Docker Image
-        run: docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-              
-            curl -X POST \
-              -H "Content-Type: application/json" \
-              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
-              -H "X-Github-Ref: $GITHUB_REF" \
-              -H "X-Github-SHA: $GITHUB_SHA" \
-              -d "$PAYLOAD" \
-              "${API_ENDPOINT}api/security/webhook/scan-results"
-          fi
-      
-      # Code security analysis with CodeQL
+        run: docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}      # Code security analysis with CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
@@ -379,7 +369,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: security-scan
     env:
-      API_ENDPOINT: ${{ secrets.API_ENDPOINT }}  # Define at job level for consistency
+      API_ENDPOINT: ${{ secrets.API_ENDPOINT }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

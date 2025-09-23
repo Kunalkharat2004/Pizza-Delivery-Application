@@ -6,15 +6,14 @@ on:
   pull_request:
     branches:
       - main
-
 jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
     permissions:
-      security-events: write    # Needed for uploading SARIF results
+      security-events: write # Needed for uploading SARIF results
     env:
-      API_ENDPOINT: ${{ secrets.API_ENDPOINT }}  # Define at job level for consistency
+      API_ENDPOINT: ${{ secrets.API_ENDPOINT }} # Define at job level for consistency
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,7 +26,7 @@ jobs:
           echo "Current working directory: $(pwd)"
           echo "Directory structure:"
           find . -type d -maxdepth 3 | sort
-          
+
       # Dependency scanning
       - name: Install dependencies
         run: npm ci
@@ -36,16 +35,16 @@ jobs:
       - name: OWASP Dependency-Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'NodeJS-TypeScript-Project'
-          path: '.'
-          format: 'HTML JSON'
-          out: './dependency-check'
+          project: "NodeJS-TypeScript-Project"
+          path: "."
+          format: "HTML JSON"
+          out: "./dependency-check"
           args: >
             --enableExperimental
             --suppression dependency-check-suppression.xml
             --scan "**/*.js,**/*.ts,package.json,package-lock.json"
             --failOnCVSS 11  # Set to 11 to prevent failing on any score (max is 10)
-        continue-on-error: true  # This will make the job continue even if vulnerabilities are found
+        continue-on-error: true # This will make the job continue even if vulnerabilities are found
 
       # Upload dependency check results as artifacts
       - name: Archive dependency check report
@@ -59,7 +58,7 @@ jobs:
         run: |
           echo "Searching for dependency check report:"
           find . -name "dependency-check-report.json" -type f || echo "No dependency check report found"
-          
+
       # Parse dependency check results and send to API
       - name: Parse and send dependency check results
         run: |
@@ -72,7 +71,7 @@ jobs:
               REPORT_PATH="$FOUND_REPORT"
             fi
           fi
-          
+
           # Check if file exists before processing
           if [ -f "$REPORT_PATH" ]; then
             echo "Found dependency check report at $REPORT_PATH"
@@ -180,20 +179,6 @@ jobs:
               "${API_ENDPOINT}api/security/webhook/scan-results"
           fi
 
-      - name: Push Docker Image
-        run: docker push ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-                }
-              }')
-              
-            curl -X POST \
-              -H "Content-Type: application/json" \
-              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
-              -H "X-Github-Ref: $GITHUB_REF" \
-              -H "X-Github-SHA: $GITHUB_SHA" \
-              -d "$PAYLOAD" \
-              "${API_ENDPOINT}api/security/webhook/scan-results"
-          fi
-      
       # Code security analysis with CodeQL
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
@@ -205,14 +190,14 @@ jobs:
         with:
           category: "/language:javascript"
           output: sarif-results
-        continue-on-error: true  # Ensuring pipeline doesn't fail here
+        continue-on-error: true # Ensuring pipeline doesn't fail here
 
       # Debug CodeQL output
       - name: Debug CodeQL Output
         run: |
           echo "Looking for SARIF files:"
           find . -name "*.sarif" -type f || echo "No SARIF files found"
-          
+
       # Parse and send CodeQL results
       - name: Parse and send CodeQL results
         run: |
@@ -285,7 +270,7 @@ jobs:
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
           fi
-      
+
       # Secret scanning
       - name: TruffleHog Secret Scanner
         uses: trufflesecurity/trufflehog@main
@@ -296,7 +281,7 @@ jobs:
           extra_args: --debug --only-verified
           format: json
           output: ./trufflehog-results.json
-        continue-on-error: true  # Ensuring this step doesn't fail the pipeline
+        continue-on-error: true # Ensuring this step doesn't fail the pipeline
 
       # Debug TruffleHog output
       - name: Debug TruffleHog Output
@@ -309,14 +294,14 @@ jobs:
           else
             echo "No debug file was created"
           fi
-          
+
       # Parse and send TruffleHog results
       - name: Parse and send TruffleHog results
         run: |
           # Check if results file exists
           REPORT_PATH="trufflehog-results.json"
           echo "Looking for TruffleHog results at $REPORT_PATH"
-          
+
           if [ -f "$REPORT_PATH" ]; then
             echo "Found TruffleHog report at $REPORT_PATH"
             # Count findings by severity (TruffleHog doesn't use severity levels, so count by type)
@@ -374,14 +359,14 @@ jobs:
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
           fi
-          
+
   # Rest of the workflow remains unchanged
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
     needs: security-scan
     env:
-      API_ENDPOINT: ${{ secrets.API_ENDPOINT }}  # Define at job level for consistency
+      API_ENDPOINT: ${{ secrets.API_ENDPOINT }} # Define at job level for consistency
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -393,32 +378,32 @@ jobs:
 
       - name: Run Lint
         run: npm run lint:fix
-        continue-on-error: true  # Ensuring this step doesn't fail the pipeline
+        continue-on-error: true # Ensuring this step doesn't fail the pipeline
 
       - name: Test and Coverage
         run: npm run test
-        continue-on-error: true  # Ensuring this step doesn't fail the pipeline
+        continue-on-error: true # Ensuring this step doesn't fail the pipeline
         env:
-          DB_HOST: ${{ secrets.TEST_DB_HOST }}
-          DB_PORT: ${{ secrets.TEST_DB_PORT }}
-          DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-          DB_NAME: ${{ secrets.TEST_DB_NAME }}
-          REFRESH_TOKEN_SECRET: ${{ secrets.TEST_REFRESH_TOKEN_SECRET }}
-          JWKS_URI: ${{ secrets.TEST_JWKS_URI }}
-          PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
-          ADMIN_EMAIL: ${{ secrets.TEST_ADMIN_EMAIL }}
-          ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-          ADMIN_FIRSTNAME: ${{ secrets.TEST_ADMIN_FIRSTNAME }}
-          ADMIN_LASTNAME: ${{ secrets.TEST_ADMIN_LASTNAME }}
-          ADMIN_ADDRESS: ${{ secrets.TEST_ADMINADDRESS }}
+          DB_HOST: ${{secrets.TEST_DB_HOST}}
+          DB_PORT: ${{secrets.TEST_DB_PORT}}
+          DB_USERNAME: ${{secrets.TEST_DB_USERNAME}}
+          DB_PASSWORD: ${{secrets.TEST_DB_PASSWORD}}
+          DB_NAME: ${{secrets.TEST_DB_NAME}}
+          REFRESH_TOKEN_SECRET: ${{secrets.TEST_REFRESH_TOKEN_SECRET}}
+          JWKS_URI: ${{secrets.TEST_JWKS_URI}}
+          PRIVATE_KEY: ${{secrets.TEST_PRIVATE_KEY}}
+          ADMIN_EMAIL: ${{secrets.TEST_ADMIN_EMAIL}}
+          ADMIN_PASSWORD: ${{secrets.TEST_ADMIN_PASSWORD}}
+          ADMIN_FIRSTNAME: ${{secrets.TEST_ADMIN_FIRSTNAME}}
+          ADMIN_LASTNAME: ${{secrets.TEST_ADMIN_LASTNAME}}
+          ADMIN_ADDRESS: ${{secrets.TEST_ADMINADDRESS}}
 
       # Debug coverage output
       - name: Debug Coverage Results
         run: |
           echo "Searching for coverage files:"
           find . -path "*/coverage/*" -type f | grep -E "\.json$" || echo "No coverage JSON files found"
-          
+
       # Send test coverage results
       - name: Parse and send test coverage results
         run: |
@@ -427,7 +412,7 @@ jobs:
           if [ ! -f "$COVERAGE_PATH" ]; then
             COVERAGE_PATH=$(find . -path "*/coverage/*" -name "*coverage*.json" | head -n 1)
           fi
-          
+
           if [ -n "$COVERAGE_PATH" ] && [ -f "$COVERAGE_PATH" ]; then
             echo "Found coverage report at $COVERAGE_PATH"
             # Parse coverage data
@@ -490,24 +475,24 @@ jobs:
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
           fi
-          
+
       - name: Build-ts
         run: npm run build
-        continue-on-error: true  # Ensuring this step doesn't fail the pipeline
+        continue-on-error: true # Ensuring this step doesn't fail the pipeline
 
       - name: Sonar Qube Scan
         uses: sonarsource/sonarqube-scan-action@v5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        continue-on-error: true  # Ensuring this step doesn't fail the pipeline
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+        continue-on-error: true # Ensuring this step doesn't fail the pipeline
 
       # Parse and send SonarQube results
       - name: Parse and send SonarQube results
         run: |
           # Wait for SonarQube analysis to complete
           sleep 10
-          
+
           # Get SonarQube project key from sonar-project.properties
           if [ -f "sonar-project.properties" ]; then
             SONAR_PROJECT_KEY=$(grep "sonar.projectKey" sonar-project.properties | cut -d'=' -f2)
@@ -594,12 +579,12 @@ jobs:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     permissions:
-      security-events: write    # Needed for uploading SARIF results
+      security-events: write # Needed for uploading SARIF results
     needs: build-and-test
     env:
       IMAGE_NAME: kunalkharat2004/mernstack_auth_service
       IMAGE_TAG: build-${{ github.run_number }}
-      API_ENDPOINT: ${{ secrets.API_ENDPOINT }}  # Define at job level for consistency
+      API_ENDPOINT: ${{ secrets.API_ENDPOINT }} # Define at job level for consistency
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - name: Checkout code
@@ -608,49 +593,49 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{secrets.DOCKER_USERNAME}}
+          password: ${{secrets.DOCKER_PASSWORD}}
 
       - name: Build Docker Image
-        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f docker/prod/Dockerfile .
+        run: docker build -t ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}} -f docker/prod/Dockerfile .
 
       # Docker image vulnerability scanning with Trivy - Fixed to run separate scans for each format
       - name: Run Trivy vulnerability scanner (JSON output)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          format: 'json'
-          output: 'trivy-results.json'
-          exit-code: '0'  # This ensures the step will continue regardless of findings
+          image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}}
+          format: "json"
+          output: "trivy-results.json"
+          exit-code: "0" # This ensures the step will continue regardless of findings
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-          
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
       - name: Run Trivy vulnerability scanner (SARIF output)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          exit-code: '0'  # This ensures the step will continue regardless of findings
+          image-ref: ${{env.IMAGE_NAME}}:${{env.IMAGE_TAG}}
+          format: "sarif"
+          output: "trivy-results.sarif"
+          exit-code: "0" # This ensures the step will continue regardless of findings
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
 
       # Upload Trivy scan results to GitHub Security tab
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
           category: container-scanning
-        continue-on-error: true  # Ensuring this step doesn't fail the pipeline
+        continue-on-error: true # Ensuring this step doesn't fail the pipeline
 
       # Debug Trivy output
       - name: Debug Trivy Output
         run: |
           echo "Looking for Trivy results:"
           find . -name "*trivy*" -type f || echo "No Trivy files found"
-          
+
       # Parse and send Trivy results
       - name: Parse and send Trivy results
         run: |
@@ -706,19 +691,3 @@ jobs:
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
-          else
-            echo "Trivy report not found, sending empty results"
-            # Create empty results payload
-            PAYLOAD=$(jq -n \
-              --arg buildId "$GITHUB_RUN_ID" \
-              '{
-                "scanType": "trivy",
-                "buildId": $buildId,
-                "data": {
-                  "vulnerabilities": {
-                    "critical": 0,
-                    "high": 0,
-                    "medium": 0,
-                    "low": 0
-                  },
-                  "details": []

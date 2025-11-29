@@ -145,6 +145,62 @@ jobs:
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
+
+          else
+            echo "Trivy report not found, sending empty results"
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              '{
+                "scanType": "trivy",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 0,
+                    "low": 0
+                  },
+                  "details": []
+                }
+              }')
+
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              "${API_ENDPOINT}api/security/webhook/scan-results"
+          fi
+
+          else
+            echo "Trivy report not found, sending empty results"
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              '{
+                "scanType": "trivy",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 0,
+                    "low": 0
+                  },
+                  "details": []
+                }
+              }')
+
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              "${API_ENDPOINT}api/security/webhook/scan-results"
+          fi
+
+          
           else
             echo "Dependency check report not found after searching in multiple locations"
             echo "Current directory structure:"
@@ -481,7 +537,7 @@ jobs:
         continue-on-error: true # Ensuring this step doesn't fail the pipeline
 
       - name: Sonar Qube Scan
-        uses: sonarsource/sonarqube-scan-action@v5
+        uses: sonarsource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
           SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
@@ -682,7 +738,7 @@ jobs:
                   "details": $details
                 }
               }')
-            
+
             # Send to API with Github metadata
             curl -X POST \
               -H "Content-Type: application/json" \
@@ -691,3 +747,30 @@ jobs:
               -H "X-Github-SHA: $GITHUB_SHA" \
               -d "$PAYLOAD" \
               "${API_ENDPOINT}api/security/webhook/scan-results"
+
+          else
+            echo "Trivy report not found, sending empty results"
+            PAYLOAD=$(jq -n \
+              --arg buildId "$GITHUB_RUN_ID" \
+              '{
+                "scanType": "trivy",
+                "buildId": $buildId,
+                "data": {
+                  "vulnerabilities": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 0,
+                    "low": 0
+                  },
+                  "details": []
+                }
+              }')
+
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -H "X-Github-Repository: $GITHUB_REPOSITORY" \
+              -H "X-Github-Ref: $GITHUB_REF" \
+              -H "X-Github-SHA: $GITHUB_SHA" \
+              -d "$PAYLOAD" \
+              "${API_ENDPOINT}api/security/webhook/scan-results"
+          fi
